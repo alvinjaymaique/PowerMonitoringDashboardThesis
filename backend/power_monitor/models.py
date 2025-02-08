@@ -8,8 +8,6 @@ class ElectricalParameter(models.Model):
     current = models.FloatField()
     power = models.FloatField()
     power_factor = models.FloatField()
-    active_power = models.FloatField()
-    apparent_power = models.FloatField()
     frequency = models.FloatField()
     is_anomaly = models.BooleanField(default=False)
     
