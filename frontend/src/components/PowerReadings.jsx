@@ -4,7 +4,8 @@ import '../css/PowerReadings.css';
 
 const PowerReadings = () => {
     const [readings, setReadings] = useState([]);
-    const apiURL = `${import.meta.env.VITE_API_URL}`
+    // VITE_API_URL=http://127.0.0.1:8000/api/; See the .env file in the frontend directory
+    const apiURL = `${import.meta.env.VITE_API_URL}`   
     useEffect(() => {
         const fetchReadings = async () => {
             try {
