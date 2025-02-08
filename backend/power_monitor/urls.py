@@ -4,6 +4,7 @@ from . import views
 app_name = 'power_monitor'
 
 urlpatterns = [
+    path('', views.ElectricalParameterList.as_view(), name='home'),
     path('parameters/', views.ElectricalParameterList.as_view(), name='parameter-list'),
     path('parameters/<int:pk>/', views.ElectricalParameterDetail.as_view(), name='parameter-detail'),
 ]

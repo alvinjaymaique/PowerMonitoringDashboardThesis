@@ -9,7 +9,7 @@ from .serializers import ElectricalParameterSerializer
 class ElectricalParameterList(generics.ListCreateAPIView):
     queryset = ElectricalParameter.objects.all()
     serializer_class = ElectricalParameterSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
 class ElectricalParameterDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = ElectricalParameter.objects.all()

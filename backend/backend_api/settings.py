@@ -33,12 +33,13 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     # My apps
     'power_monitor',
+    # Used to allow cross communication domain between frontend and backend
+    'corsheaders',
     # Used to create RESTful APIs
     'rest_framework',
     # JSON Web Token authentication for Django REST framework
     'rest_framework_simplejwt',
-    # Used to allow cross communication domain between frontend and backend
-    'corsheaders',
+    
     
     'django.contrib.admin',
     'django.contrib.auth',
@@ -49,7 +50,7 @@ INSTALLED_APPS = [
 ]
 
 # Allow only the following origins to communicate with the backend
-CORS_ALLOWED_ORIGINS = ['http://localhost:3000']
+CORS_ALLOWED_ORIGINS = ['http://localhost:5173']
 
 # # Dynamic origins
 # def allowed_origins_func(request):
