@@ -31,6 +31,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    # My apps
+    'power_monitor',
     # Used to create RESTful APIs
     'rest_framework',
     # JSON Web Token authentication for Django REST framework
