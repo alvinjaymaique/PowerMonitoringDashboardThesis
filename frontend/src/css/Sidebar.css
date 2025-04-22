@@ -1,0 +1,75 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background-color: #2f855a;
+    color: white;
+    padding: 20px;
+    margin: 20px;
+    border-radius: 16px;
+  }
+
+  .sidebar h2 {
+    font-size: 25px;
+    margin-bottom: 40px;
+  }
+  
+  .sidebar button {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    margin-bottom: 10px;
+    background-color: #38a169;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .sidebar button:hover {
+    background-color: #4bdf92;
+  }
+
+  .sidebar button .fa-icon {
+    margin-right: 10px;
+  }
+
+  .profile {
+    display: flex;
+    align-items: center;
+    margin-top: auto; /* Push the profile section to the bottom */
+    border-top: 1px solid #f0fdf4;
+    padding-top: 20px;
+    padding-bottom: 10px;
+  }
+  
+  .profile .fa-icon {
+    height: 25px;
+    margin-right: 10px;
+    border: 2px solid #f0fdf4;
+    padding: 0 5px;
+    padding-top: 5px;
+    border-radius: 50%;
+  }
+  
+  .profile-info {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .profile-name {
+    font-weight: bold;
+    margin: 0;
+  }
+  
+  .profile-access {
+    font-size: 0.875rem;
+    margin: 0;
+  }
