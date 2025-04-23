@@ -1,0 +1,310 @@
+/* Base container */
+.dashboard-container {
+    padding: 20px;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  /* Header styles */
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dashboard-title {
+    color: #2f855a;
+    margin: 0;
+    font-size: 1.8rem;
+  }
+  
+  .dashboard-date {
+    font-size: 1rem;
+    color: #555;
+  }
+  
+  .dashboard-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .download-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: #2f855a;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+  
+  .download-button:hover {
+    background-color: #38a169;
+  }
+  
+  /* Date selection row */
+  .date-selection-row {
+    background-color: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .date-range-selector {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .date-range-label {
+    color: #2f855a;
+    font-weight: 500;
+  }
+  
+  .date-range-inputs {
+    display: flex;
+    align-items: center;
+  }
+  
+  .date-separator {
+    margin: 0 10px;
+    font-weight: bold;
+    color: #2f855a;
+  }
+  
+  .date-range-dropdown,
+  .date-picker {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background-color: white;
+    color: #333;
+    font-size: 0.9rem;
+  }
+  
+  .date-range-dropdown:focus,
+  .date-picker:focus {
+    outline: none;
+    border-color: #2f855a;
+  }
+  
+  /* Main content grid */
+  .dashboard-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  /* Metric cards */
+  .metric-cards-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  
+  .metric-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.3s;
+  }
+  
+  .metric-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .metric-card h3 {
+    color: #2f855a;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+  }
+  
+  .metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 0;
+    color: #333;
+  }
+  
+  .unit {
+    font-size: 1rem;
+    color: #555;
+  }
+  
+  /* Status indicator */
+  .status-indicator {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+  
+  .status-indicator.good {
+    background-color: #48bb78;
+    color: white;
+  }
+  
+  .status-indicator.poor {
+    background-color: #f56565;
+    color: white;
+  }
+  
+  /* Graph row */
+  .graph-row {
+    width: 100%;
+  }
+  
+  /* Graph card styling */
+  .graph-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  /* Graph header styling */
+  .graph-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 15px;
+  }
+  
+  .graph-header h3 {
+    margin: 0;
+    color: #2f855a;
+    font-size: 1.25rem;
+  }
+  
+  /* Graph controls styling */
+  .graph-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  
+  .graph-type-button {
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: 1px solid #2f855a;
+    background-color: white;
+    color: #2f855a;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+  }
+  
+  .graph-type-button:hover {
+    background-color: #f0fff4;
+  }
+  
+  .graph-type-button.active {
+    background-color: #2f855a;
+    color: white;
+  }
+  
+  /* Graph content styling */
+  .graph-content {
+    width: 100%;
+    height: 300px;
+  }
+  
+  .graph-placeholder {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 1px dashed #ccc;
+  }
+  
+  .graph-message {
+    text-align: center;
+    color: #666;
+  }
+  
+  /* Responsive design */
+  @media (max-width: 992px) {
+    .metric-cards-row {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .graph-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    
+    .graph-controls {
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 5px;
+    }
+    
+    .date-range-selector {
+      flex-wrap: wrap;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .dashboard-actions {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    
+    .date-range-selector {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    
+    .date-range-inputs {
+      width: 100%;
+    }
+    
+    .date-picker {
+      flex: 1;
+      min-width: 120px;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .metric-cards-row {
+      grid-template-columns: 1fr;
+    }
+    
+    .dashboard-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    
+    .date-range-dropdown,
+    .date-picker {
+      width: 100%;
+    }
+  }

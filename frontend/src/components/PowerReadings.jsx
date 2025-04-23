@@ -24,7 +24,7 @@ const PowerReadings = () => {
 
     return (
         <div className="readings-container">
-            <h2 className="readings-title">Power Readings</h2>
+            <h2 className   ="readings-title">Power Readings</h2>
             <div className="table-container">
                 <table className="readings-table">
                     <thead>

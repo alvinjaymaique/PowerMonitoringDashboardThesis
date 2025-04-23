@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import PowerReadings from "../components/PowerReadings";
+import Dashboard from "../components/Dashboard";
 import "../css/MainContent.css";
 
 const MainContent = () => {
@@ -9,13 +10,13 @@ const MainContent = () => {
   const renderContent = () => {
     switch (activeContent) {
       case "dashboard":
-        return <h2>Dashboard Content</h2>;
+        return <Dashboard />;
       case "powerReadings":
         return <PowerReadings />;
       case "settings":
         return <h2>Settings Content</h2>;
       default:
-        return <h2>Dashboard Content</h2>;
+        return <Dashboard />;
     }
   };
 
