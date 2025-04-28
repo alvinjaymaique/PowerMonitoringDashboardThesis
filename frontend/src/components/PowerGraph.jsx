@@ -85,34 +85,80 @@ const PowerGraph = ({ readings, graphType, selectedNode }) => {
         // Sort by timestamp (oldest first for the chart)
         const sortedData = [...readings].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
         
-        // Adaptive resolution: If we have too many points, sample based on data size
-        const totalPoints = sortedData.length;
-        let dataToRender = sortedData;
-        
-        // For extremely large datasets, use more aggressive sampling
-        if (totalPoints > 10000) {
-          const samplingRate = Math.ceil(totalPoints / 500);
-          console.log(`Very large dataset detected (${totalPoints} points). Using sampling rate: 1:${samplingRate}`);
-          dataToRender = sortedData.filter((_, index) => index % samplingRate === 0);
-        } else if (totalPoints > 1000) {
-          const samplingRate = Math.ceil(totalPoints / 1000);
-          console.log(`Large dataset detected (${totalPoints} points). Using sampling rate: 1:${samplingRate}`);
-          dataToRender = sortedData.filter((_, index) => index % samplingRate === 0);
-        }
-        
-        // Convert graphType to backend parameter name format for anomaly check
+        // Get parameter name for anomaly checking
         const paramName = graphType === 'powerFactor' ? 'power_factor' : graphType;
         
+        // Count original anomaly proportion for this specific parameter
+        const originalAnomalies = sortedData.filter(d => 
+          d?.is_anomaly && d?.anomaly_parameters && d.anomaly_parameters.includes(paramName)
+        );
+        const regularData = sortedData.filter(d => 
+          !(d?.is_anomaly && d?.anomaly_parameters && d.anomaly_parameters.includes(paramName))
+        );
+        
+        const totalPoints = sortedData.length;
+        const originalProportion = (originalAnomalies.length / totalPoints) * 100;
+        
+        console.log(`Original data: ${originalAnomalies.length}/${totalPoints} anomalies (${originalProportion.toFixed(2)}%)`);
+        
+        let dataToRender = sortedData;
+        
+        // For large datasets, use stratified sampling to preserve proportions
+        if (totalPoints > 500) {
+          const targetPoints = totalPoints > 10000 ? 500 : 1000;
+          console.log(`Large dataset detected (${totalPoints} points). Targeting ~${targetPoints} points with stratified sampling.`);
+          
+          // Calculate how many points to sample from each group
+          const anomalyTargetCount = Math.round(targetPoints * (originalAnomalies.length / totalPoints));
+          const regularTargetCount = targetPoints - anomalyTargetCount;
+          
+          console.log(`Aiming for ${anomalyTargetCount} anomalies and ${regularTargetCount} regular points`);
+          
+          // Sample from each group
+          let sampledAnomalies = [];
+          if (originalAnomalies.length > 0) {
+            // If anomalies are less than target, keep all of them
+            if (originalAnomalies.length <= anomalyTargetCount) {
+              sampledAnomalies = originalAnomalies;
+            } else {
+              const rate = Math.ceil(originalAnomalies.length / anomalyTargetCount);
+              sampledAnomalies = originalAnomalies.filter((_, i) => i % rate === 0);
+            }
+          }
+          
+          let sampledRegular = [];
+          if (regularData.length > 0) {
+            // If regular points are less than target, keep all of them
+            if (regularData.length <= regularTargetCount) {
+              sampledRegular = regularData;
+            } else {
+              const rate = Math.ceil(regularData.length / regularTargetCount);
+              sampledRegular = regularData.filter((_, i) => i % rate === 0);
+            }
+          }
+          
+          // Combine and sort by timestamp
+          dataToRender = [...sampledAnomalies, ...sampledRegular]
+            .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+          
+          // Log final proportions
+          const finalAnomalies = dataToRender.filter(d => 
+            d?.is_anomaly && d?.anomaly_parameters && d.anomaly_parameters.includes(paramName)
+          ).length;
+          const finalProportion = (finalAnomalies / dataToRender.length) * 100;
+          
+          console.log(`Final sampled data: ${finalAnomalies}/${dataToRender.length} anomalies (${finalProportion.toFixed(2)}%)`);
+        }
+        
         return dataToRender.map(reading => ({
-          // Include date information in the time display
+          // Map fields for chart display
           time: new Date(reading.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + 
                 new Date(reading.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          fullTime: new Date(reading.timestamp).toLocaleString(), // Full date and time
+          fullTime: new Date(reading.timestamp).toLocaleString(),
           fullTimestamp: reading.timestamp,
           [graphType]: graphType === 'powerFactor' ? reading.power_factor : reading[graphType],
           is_anomaly: reading.is_anomaly,
           anomaly_parameters: reading.anomaly_parameters || [],
-          // Add a specific flag for this parameter's anomaly state
           isParamAnomalous: reading.is_anomaly && 
                            reading.anomaly_parameters && 
                            reading.anomaly_parameters.includes(paramName)
