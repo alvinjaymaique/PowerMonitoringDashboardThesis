@@ -266,7 +266,6 @@ const PowerGraph = ({ readings, graphType, selectedNode }) => {
               <h4>Data Points</h4>
               <p>{chartData.length}</p>
             </div>
-            {/* Anomalies count removed */}
           </div>
         </div>
           
