@@ -97,47 +97,29 @@ const PowerGraph = ({ readings, graphType, selectedNode }) => {
         );
         
         const totalPoints = sortedData.length;
-        const originalProportion = (originalAnomalies.length / totalPoints) * 100;
+        const originalAnomalyCount = originalAnomalies.length;
+        const originalProportion = originalAnomalyCount / totalPoints;
         
-        console.log(`Original data: ${originalAnomalies.length}/${totalPoints} anomalies (${originalProportion.toFixed(2)}%)`);
+        console.log(`Original data: ${originalAnomalyCount}/${totalPoints} anomalies (${(originalProportion * 100).toFixed(2)}%)`);
         
         let dataToRender = sortedData;
         
-        // For large datasets, use stratified sampling to preserve proportions
+        // For large datasets, use reservoir sampling with stratification
         if (totalPoints > 500) {
           const targetPoints = totalPoints > 10000 ? 500 : 1000;
           console.log(`Large dataset detected (${totalPoints} points). Targeting ~${targetPoints} points with stratified sampling.`);
           
-          // Calculate how many points to sample from each group
-          const anomalyTargetCount = Math.round(targetPoints * (originalAnomalies.length / totalPoints));
-          const regularTargetCount = targetPoints - anomalyTargetCount;
+          // IMPORTANT: Preserve the exact same proportion in sampled data
+          const targetAnomalyCount = Math.round(targetPoints * originalProportion);
+          const targetRegularCount = targetPoints - targetAnomalyCount;
           
-          console.log(`Aiming for ${anomalyTargetCount} anomalies and ${regularTargetCount} regular points`);
+          console.log(`Target distribution: ${targetAnomalyCount} anomalies (${(originalProportion * 100).toFixed(2)}%) and ${targetRegularCount} regular points`);
           
-          // Sample from each group
-          let sampledAnomalies = [];
-          if (originalAnomalies.length > 0) {
-            // If anomalies are less than target, keep all of them
-            if (originalAnomalies.length <= anomalyTargetCount) {
-              sampledAnomalies = originalAnomalies;
-            } else {
-              const rate = Math.ceil(originalAnomalies.length / anomalyTargetCount);
-              sampledAnomalies = originalAnomalies.filter((_, i) => i % rate === 0);
-            }
-          }
+          // Use reservoir sampling for both anomalous and regular points
+          const sampledAnomalies = reservoirSample(originalAnomalies, targetAnomalyCount);
+          const sampledRegular = reservoirSample(regularData, targetRegularCount);
           
-          let sampledRegular = [];
-          if (regularData.length > 0) {
-            // If regular points are less than target, keep all of them
-            if (regularData.length <= regularTargetCount) {
-              sampledRegular = regularData;
-            } else {
-              const rate = Math.ceil(regularData.length / regularTargetCount);
-              sampledRegular = regularData.filter((_, i) => i % rate === 0);
-            }
-          }
-          
-          // Combine and sort by timestamp
+          // Combine and sort chronologically
           dataToRender = [...sampledAnomalies, ...sampledRegular]
             .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
           
@@ -145,13 +127,13 @@ const PowerGraph = ({ readings, graphType, selectedNode }) => {
           const finalAnomalies = dataToRender.filter(d => 
             d?.is_anomaly && d?.anomaly_parameters && d.anomaly_parameters.includes(paramName)
           ).length;
-          const finalProportion = (finalAnomalies / dataToRender.length) * 100;
+          const finalProportion = finalAnomalies / dataToRender.length;
           
-          console.log(`Final sampled data: ${finalAnomalies}/${dataToRender.length} anomalies (${finalProportion.toFixed(2)}%)`);
+          console.log(`Final sampled data: ${finalAnomalies}/${dataToRender.length} anomalies (${(finalProportion * 100).toFixed(2)}%)`);
         }
         
         return dataToRender.map(reading => ({
-          // Map fields for chart display
+          // Map fields for chart display - existing mapping code
           time: new Date(reading.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + 
                 new Date(reading.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           fullTime: new Date(reading.timestamp).toLocaleString(),
@@ -167,6 +149,28 @@ const PowerGraph = ({ readings, graphType, selectedNode }) => {
         console.error("Error formatting data:", err);
         return [];
       }
+    };
+    
+    // Helper function: Reservoir sampling algorithm - provides uniform random sampling without bias
+    const reservoirSample = (array, sampleSize) => {
+      if (array.length <= sampleSize) {
+        return [...array]; // Return all elements if we need more than exist
+      }
+      
+      // Initialize reservoir with first sampleSize elements
+      const result = array.slice(0, sampleSize);
+      
+      // Replace elements with gradually decreasing probability
+      for (let i = sampleSize; i < array.length; i++) {
+        // Random index in reservoir
+        const j = Math.floor(Math.random() * (i + 1));
+        // Replace element if random index is within reservoir
+        if (j < sampleSize) {
+          result[j] = array[i];
+        }
+      }
+      
+      return result;
     };
     
     // Calculate statistics for the dataset

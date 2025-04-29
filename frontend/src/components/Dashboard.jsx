@@ -192,6 +192,7 @@ const Dashboard = () => {
   }, [startDate, endDate]);
 
   // Sample data to reduce volume while preserving patterns
+  // Update the sampleData function in Dashboard.jsx
   const sampleData = useCallback((data, samplingRate) => {
     if (!data || data.length === 0 || samplingRate <= 1) return data;
     
@@ -205,10 +206,21 @@ const Dashboard = () => {
     const anomalousPercentage = anomalousData.length / data.length;
     console.log(`Original data: ${(anomalousPercentage * 100).toFixed(2)}% anomalous (${anomalousData.length}/${data.length})`);
     
-    // Determine how many samples to take from each group to maintain the proportion
+    // Determine maximum percentage of anomalies to allow in the sampled set
+    // This prevents overrepresentation of anomalies in visualization
+    const maxAnomalyPercentage = 0.3; // Max 30% anomalies in the final visualization
+    
+    // Determine how many samples to take from each group to maintain proper proportion
     const totalSamples = Math.ceil(data.length / samplingRate);
-    const anomalousSamples = Math.round(totalSamples * anomalousPercentage);
-    const regularSamples = totalSamples - anomalousSamples;
+    let anomalousSamples = Math.round(totalSamples * anomalousPercentage);
+    let regularSamples = totalSamples - anomalousSamples;
+    
+    // Apply maximum anomaly percentage constraint
+    const maxAllowedAnomalies = Math.floor(totalSamples * maxAnomalyPercentage);
+    if (anomalousSamples > maxAllowedAnomalies) {
+      anomalousSamples = maxAllowedAnomalies;
+      regularSamples = totalSamples - anomalousSamples;
+    }
     
     // Sample from each group separately
     let sampledAnomalous = [];
@@ -803,20 +815,55 @@ useEffect(() => {
     setShouldFetchData(true); // Trigger data fetch when date changes
   };
 
-  // Handler for node selection change
-  const handleNodeChange = (e) => {
-    setSelectedNode(e.target.value);
-    // Clear existing data to prevent displaying old data while loading
-    setReadings([]);
-    setRawReadings([]);
-    setLatestReading(null);
-    
-    // Reset the date range to ensure we get all data for the new node
-    setIsLoadingDateRange(true);
-    
-    // The date range will be updated by the useEffect that watches selectedNode
-    // Don't set shouldFetchData here, as it will be set after date range is established
-  };
+// Handler for node selection change - modified to fix anomaly visualization
+const handleNodeChange = (e) => {
+  const newNode = e.target.value;
+  console.log(`Node changed to: ${newNode}`);
+
+  // Cancel any ongoing background processes
+  if (anomalyProcessRef.current) {
+    clearTimeout(anomalyProcessRef.current);
+    anomalyProcessRef.current = null;
+  }
+  
+  setSelectedNode(newNode);
+  
+  // Set a very wide date range to ensure we get all data
+  const today = new Date();
+  const oneYearAgo = new Date(today);
+  oneYearAgo.setFullYear(today.getFullYear() - 1);
+  
+  // Format dates in YYYY-MM-DD format
+  const formattedStart = oneYearAgo.toISOString().split('T')[0];
+  const formattedEnd = today.toISOString().split('T')[0];
+  
+  console.log(`Setting comprehensive date range for new node: ${formattedStart} to ${formattedEnd}`);
+  
+  // Set the dates directly
+  setStartDate(formattedStart);
+  setEndDate(formattedEnd);
+  
+  // Reset state completely to ensure clean data loading
+  setReadings([]);
+  setRawReadings([]);
+  rawReadingsRef.current = [];
+  setLatestReading(null);
+  
+  // Reset fetch states
+  isFetchInProgressRef.current = false;
+  
+  // Reset sampling rate config
+  setAnomalySamplingConfig({
+    preserveAllAnomalies: false, // Change to false to get proper representation
+    maxAnomalyPercentage: 0.3,  // Limit anomalies to 30% maximum in visualization
+    minNormalPoints: 100        // Ensure we have at least 100 normal points
+  });
+  
+  // Trigger data fetch
+  setTimeout(() => {
+    setShouldFetchData(true);
+  }, 100);
+};
 
   // Handler for PDF download
   const handleDownloadPDF = () => {
