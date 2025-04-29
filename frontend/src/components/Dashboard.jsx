@@ -51,11 +51,11 @@ import {
  * 
  * | Parameter     | Minimum Value | Maximum Value |
  * |---------------|--------------|---------------|
- * | Voltage       | 218.51 V     | 241.49 V      |
+ * | Voltage       | 217.4 V     | 242.6 V      |
  * | Current       | 0 A          | 50 A          |
  * | Power         | 0 W          | 10,000 W      |
- * | Frequency     | 59.5 Hz      | 60.5 Hz       |
- * | Power Factor  | 0.8          | 1.0           |
+ * | Frequency     | 59.2 Hz      | 60.8 Hz       |
+ * | Power Factor  | 0.792          | 1.0           |
  * 
  * POWER QUALITY EVALUATION CRITERIA
  * -------------------------------
@@ -67,9 +67,9 @@ import {
  *    - Power Factor: ≥ 0.95
  * 
  * 2. Good Quality (All parameters within acceptable ranges):
- *    - Voltage: 218.51V - 241.49V
- *    - Frequency: 59.5Hz - 60.5Hz
- *    - Power Factor: ≥ 0.8
+ *    - Voltage: 217.4 - 242.6V
+ *    - Frequency: 59.2Hz - 60.8Hz
+ *    - Power Factor: ≥ 0.792
  * 
  * 3. Poor Quality (One or more parameters outside acceptable ranges)
  * 
