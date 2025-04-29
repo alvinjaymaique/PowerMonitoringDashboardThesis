@@ -248,43 +248,27 @@ const PowerGraph = ({ readings, graphType, selectedNode }) => {
         <div className="two-column-layout">
           {/* First Column - Stats and Anomalies */}
           <div className="stats-column">
-            <h3 className="stats-title">Statistics</h3>
-            <div className="graph-stats">
-              <div className="stat-item">
-                <h4>Min</h4>
-                <p>{stats.min} {unit}</p>
-              </div>
-              <div className="stat-item">
-                <h4>Average</h4>
-                <p>{stats.avg} {unit}</p>
-              </div>
-              <div className="stat-item">
-                <h4>Max</h4>
-                <p>{stats.max} {unit}</p>
-              </div>
-              <div className="stat-item">
-                <h4>Data Points</h4>
-                <p>{chartData.length}</p>
-              </div>
-              {/* Only count anomalies specific to this parameter */}
-              {chartData.filter(d => {
-                const paramName = graphType === 'powerFactor' ? 'power_factor' : graphType;
-                return d?.is_anomaly && 
-                       d?.anomaly_parameters && 
-                       d.anomaly_parameters.includes(paramName);
-              }).length > 0 && (
-                <div className="stat-item anomaly-stat">
-                  <h4>Anomalies</h4>
-                  <p>{chartData.filter(d => {
-                    const paramName = graphType === 'powerFactor' ? 'power_factor' : graphType;
-                    return d?.is_anomaly && 
-                           d?.anomaly_parameters && 
-                           d.anomaly_parameters.includes(paramName);
-                  }).length}</p>
-                </div>
-              )}
+          <h3 className="stats-title">Statistics</h3>
+          <div className="graph-stats">
+            <div className="stat-item">
+              <h4>Min</h4>
+              <p>{stats.min} {unit}</p>
             </div>
+            <div className="stat-item">
+              <h4>Average</h4>
+              <p>{stats.avg} {unit}</p>
+            </div>
+            <div className="stat-item">
+              <h4>Max</h4>
+              <p>{stats.max} {unit}</p>
+            </div>
+            <div className="stat-item">
+              <h4>Data Points</h4>
+              <p>{chartData.length}</p>
+            </div>
+            {/* Anomalies count removed */}
           </div>
+        </div>
           
           {/* Second Column - Graph */}
           <div className="graph-column">
