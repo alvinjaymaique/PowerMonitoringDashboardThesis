@@ -1,10 +1,10 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import PowerReadings from "./components/PowerReadings.jsx";
-import LoginPage from "page/LoginPage";
-import SignupPage from "page/SignupPage";
-import MainContent from "page/MainContent";
-import ApiTest from "./ApiTest.jsx";
+import PowerReadings from "./components/PowerReadings";
+import LoginPage from "./page/LoginPage";
+import SignupPage from "./page/SignupPage";
+import MainContent from "./page/MainContent";
+import ApiTest from "./ApiTest";
 import "./App.css";
 
 function App() {
