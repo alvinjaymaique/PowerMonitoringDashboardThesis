@@ -1,11 +1,11 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import PowerReadings from './components/PowerReadings.jsx';
-import LoginPage from './Page/LoginPage.jsx';
-import SignupPage from './page/SignupPage.jsx';
-import MainContent from './page/MainContent.jsx';
-import ApiTest from './ApiTest.jsx';
-import './App.css';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import PowerReadings from "./components/PowerReadings.jsx";
+import LoginPage from "page/LoginPage";
+import SignupPage from "page/SignupPage";
+import MainContent from "page/MainContent";
+import ApiTest from "./ApiTest.jsx";
+import "./App.css";
 
 function App() {
   return (
