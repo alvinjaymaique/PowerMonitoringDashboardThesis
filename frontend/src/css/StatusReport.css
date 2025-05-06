@@ -1,0 +1,130 @@
+.status-report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.report-title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #2f855a;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.date-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.date-label {
+  font-size: 1rem;
+}
+
+.date-picker {
+  padding: 0.4rem;
+  font-size: 1rem;
+}
+
+.download-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #2f855a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.download-button:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
+.status-report-chart {
+  background-color: white;
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 6vh auto; /* 20% top and bottom margin */
+  width: 80%; /* keeps spacing on the sides */
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1); /* floating effect */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.status-report-chart:hover,
+.status-report-explanation:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+}
+
+.chart-header h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: bold;
+}
+
+.chart-content {
+  min-height: 350px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #888;
+  font-style: italic;
+}
+
+.status-report-explanation {
+  background-color: #f5f5f5;
+  padding: 1rem;
+  border-left: 4px solid #7ed6df;
+  border-radius: 8px;
+  margin: 2.5vh auto; /* 20% top and bottom margin */
+  width: 80%; /* keeps spacing on the sides */
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1); /* floating effect */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.status-report-explanation h4 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+.explanation-content {
+  min-height: 150px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.back-button-container {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 1rem;
+}
+
+.back-button {
+  background-color: #74b9ff;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  background-color: #0984e3;
+}
+#root {
+  background-color: #d9eeda;
+  min-height: 100vh;
+}
