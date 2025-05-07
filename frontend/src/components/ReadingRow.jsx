@@ -86,7 +86,7 @@ const ReadingRow = React.memo(({ reading, formatDate, formatTime }) => {
         className={isAnomaly ? "anomaly-cell" : "normal-cell"}
         onClick={() => {
           if (isAnomaly) {
-            navigate("/status-report");
+            navigate("/status-report", { state: { anomalyReading: reading } });
           }
         }}
         style={{ cursor: isAnomaly ? "pointer" : "default" }}

@@ -15,6 +15,7 @@
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
+    "apexcharts": "^4.7.0",
     "axios": "^1.7.9",
     "django": "^99.99.99",
     "firebase": "^11.6.0",
@@ -24,6 +25,7 @@
     "lodash": "^4.17.21",
     "npm": "^11.1.0",
     "react": "^18.2.0",
+    "react-apexcharts": "^1.7.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.5.2",
     "recharts": "^2.12.3"

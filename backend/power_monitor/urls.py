@@ -20,6 +20,7 @@ from .views import (
     export_csv,
     user_profile,
     ClassifyReadingsView,
+    ExplainAnomalyView,
     TestMLClassifierView,
 )
 
@@ -53,5 +54,6 @@ urlpatterns = [
     path('auth/user-profile/', user_profile, name='user-profile'),
     path('firebase/node-date-range/', NodeDateRangeView.as_view(), name='node-date-range'),
     path('classify-readings/', ClassifyReadingsView.as_view(), name='classify-readings'),
+    path('explain-anomaly/', ExplainAnomalyView.as_view(), name='explain-anomaly'),
     path('test-ml-classifier/', TestMLClassifierView.as_view(), name='test-ml-classifier'),
 ]

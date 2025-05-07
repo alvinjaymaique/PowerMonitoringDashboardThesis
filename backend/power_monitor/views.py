@@ -33,10 +33,16 @@ from .services.cache_service import CacheService
 # Import the ML service
 from .services.classifier_service import MLAnomalyClassifier
 
+# Import XAI service
+from .services.shap_service import ShapExplainerService
+
 anomaly_detector = AnomalyDetectionService()
 # Initialize the ML classifier (singleton pattern)
+
 ml_classifier = MLAnomalyClassifier()
 
+# Initialize the SHAP service as a singleton
+shap_explainer = ShapExplainerService()
 # Add these new view classes at the end of the file:
 
 class CacheStatsView(APIView):
@@ -1318,6 +1324,47 @@ class ClassifyReadingsView(APIView):
             traceback.print_exc()
             return Response(
                 {"error": f"Failed to classify readings: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+class ExplainAnomalyView(APIView):
+    """API endpoint for generating SHAP explanations for anomalies."""
+    
+    def post(self, request):
+        """Generate SHAP explanation for a specific reading."""
+        try:
+            # Get the reading from the request
+            reading = request.data.get('reading')
+            
+            if not reading:
+                return Response(
+                    {"error": "No reading provided for explanation"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+            # Check if the reading is an anomaly
+            if not reading.get('is_anomaly', False):
+                return Response(
+                    {"error": "The provided reading is not an anomaly"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+            # Generate SHAP explanation
+            explanation = shap_explainer.explain_reading(reading)
+            
+            if explanation is None:
+                return Response(
+                    {"error": "Failed to generate explanation"}, 
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+                
+            return Response(explanation)
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {"error": f"Failed to generate explanation: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
