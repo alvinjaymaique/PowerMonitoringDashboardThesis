@@ -66,113 +66,88 @@ const Dashboard = () => {
   // Handler for PDF download
   const handleDownloadPDF = async () => {
     try {
-      // Set up loading state
       setIsGeneratingPDF(true);
-      console.log('Starting PDF generation...');
       
-      // Create a new PDF document (A4 size in landscape)
-      const pdf = new jsPDF('landscape', 'mm', 'a4');
+      // Create a new PDF document
+      const pdf = new jsPDF('portrait', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 10; // Margin in mm
+      const margin = 10;
       
-      // Helper function to capture an element and add to PDF
-      const addElementToPDF = async (element, title, x, y, width, height) => {
-        if (!element) return y;
-        
-        const canvas = await html2canvas(element, {
-          scale: 2, // Higher scale for better quality
+      // Add title
+      pdf.setFontSize(18);
+      pdf.text(`Anomaly Analysis Report`, margin, margin + 5);
+      
+      pdf.setFontSize(12);
+      pdf.text(`Generated: ${new Date().toLocaleString()}`, margin, margin + 15);
+      
+      if (anomalyReading) {
+        pdf.text(`Anomaly Type: ${anomalyReading.anomaly_type || 'Unknown'}`, margin, margin + 25);
+        pdf.text(`Reading ID: ${anomalyReading.id || 'Unknown'}`, margin, margin + 35);
+        pdf.text(`Timestamp: ${new Date(anomalyReading.timestamp).toLocaleString()}`, margin, margin + 45);
+      }
+      
+      // Capture the chart with higher quality
+      const chartElement = document.querySelector('.status-report-chart');
+      if (chartElement) {
+        const chartCanvas = await html2canvas(chartElement, {
+          scale: 2.5, // Higher quality but not too large
           logging: false,
           useCORS: true,
           allowTaint: true,
+          backgroundColor: "#ffffff"
         });
         
-        const imgData = canvas.toDataURL('image/png');
+        const chartImgData = chartCanvas.toDataURL('image/png');
         
-        // Add title if provided
-        if (title) {
-          pdf.setFontSize(14);
-          pdf.text(title, x, y);
-          y += 8; // Move down after title
+        // Calculate dimensions that preserve aspect ratio
+        const chartAspectRatio = chartCanvas.width / chartCanvas.height;
+        const chartWidth = pageWidth - (margin * 2);
+        const chartHeight = chartWidth / chartAspectRatio;
+        
+        // Add chart with preserved aspect ratio
+        pdf.addImage(chartImgData, 'PNG', margin, 55, chartWidth, chartHeight);
+        
+        // Track the y-position after adding the chart
+        let yPosition = 55 + chartHeight + 10; // Add 10mm spacing
+        
+        // Capture the explanation
+        const explanationElement = document.querySelector('.status-report-explanation');
+        if (explanationElement) {
+          const explCanvas = await html2canvas(explanationElement, {
+            scale: 2.5,
+            logging: false,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: "#ffffff"
+          });
+          
+          const explImgData = explCanvas.toDataURL('image/png');
+          
+          // Calculate dimensions that preserve aspect ratio for explanation
+          const explAspectRatio = explCanvas.width / explCanvas.height;
+          const explWidth = pageWidth - (margin * 2);
+          const explHeight = explWidth / explAspectRatio;
+          
+          // Check if explanation will fit on current page
+          if (yPosition + explHeight > pageHeight - 15) {
+            // Add a new page if it won't fit
+            pdf.addPage();
+            yPosition = margin;
+          }
+          
+          // Add explanation with preserved aspect ratio
+          pdf.addImage(explImgData, 'PNG', margin, yPosition, explWidth, explHeight);
         }
         
-        // Add the image
-        pdf.addImage(imgData, 'PNG', x, y, width, height);
-        return y + height + 10; // Return next Y position with margin
-      };
-      
-      // ---- Page 1: Dashboard Overview ----
-      
-      // Add a title
-      pdf.setFontSize(18);
-      pdf.text(`Power Monitoring Dashboard: Node ${selectedNode}`, margin, margin + 5);
-      pdf.setFontSize(12);
-      pdf.text(`Date Range: ${startDate} to ${endDate}`, margin, margin + 15);
-      pdf.text(`Generated on: ${new Date().toLocaleString()}`, margin, margin + 22);
-      
-      // Get references to key elements
-      const powerQualityElement = document.querySelector('.power-quality-card');
-      const interruptionElement = document.querySelector('.interruption-metrics-card');
-      const anomalyElement = document.querySelector('.anomaly-metrics-card');
-      
-      // Add metric cards (side by side)
-      let yPos = margin + 30;
-      const cardWidth = (pageWidth - (margin * 3)) / 2;
-      const cardHeight = 60;
-      
-      // Add power quality card
-      await addElementToPDF(powerQualityElement, 'Power Quality Status', margin, yPos, cardWidth, cardHeight);
-      
-      // Add interruption metrics next to it
-      await addElementToPDF(interruptionElement, 'Interruption Metrics', margin + cardWidth + margin, yPos, cardWidth, cardHeight);
-      
-      // Add anomaly metrics below
-      yPos += cardHeight + 15;
-      await addElementToPDF(anomalyElement, 'Anomaly Metrics', margin, yPos, cardWidth, cardHeight);
-      
-      // Store the current graph type so we can restore it later
-      const originalGraphType = graphType;
-      
-      // Array of all graph types to generate
-      const allGraphTypes = ['voltage', 'current', 'power', 'frequency', 'powerFactor'];
-      
-      // Generate each graph type and add to PDF
-      for (let i = 0; i < allGraphTypes.length; i++) {
-        // Add a new page for each graph
-        pdf.addPage();
-        
-        const currentType = allGraphTypes[i];
-        
-        // Temporarily change the graph type
-        setGraphType(currentType);
-        
-        // Need to wait for the graph to render
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // Get the graph element after it has rendered with the new type
-        const graphElement = document.querySelector('.graph-content');
-        
-        // Format title based on graph type
-        const graphTitle = currentType === 'powerFactor' 
-          ? `Power Factor Graph - Node ${selectedNode}`
-          : `${currentType.charAt(0).toUpperCase() + currentType.slice(1)} Graph - Node ${selectedNode}`;
-        
-        // Add the graph to the PDF
-        await addElementToPDF(graphElement, graphTitle, margin, margin + 10, pageWidth - (margin * 2), 120);
+        // Save the PDF
+        pdf.save(`Anomaly_Report_${reportDate}.pdf`);
       }
-      
-      // Restore the original graph type
-      setGraphType(originalGraphType);
-      
-      // Save the PDF with a comprehensive filename
-      pdf.save(`Power_Dashboard_${selectedNode}_${startDate}_to_${endDate}.pdf`);
-      console.log('PDF generated successfully!');
-      
-      setIsGeneratingPDF(false);
     } catch (error) {
       console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF report');
+    } finally {
       setIsGeneratingPDF(false);
-      alert('Failed to generate PDF. Please try again.');
     }
   };
 

@@ -61,28 +61,31 @@ const StatusReportChart = ({ anomalyReading }) => {
   // Configure waterfall chart
   const getChartOptions = () => {
     if (!explanation) return {};
-
+  
     const featureValues = explanation.feature_values;
     const featureLabels = explanation.feature_names.map(name => 
       `${name} (${featureValues[name]?.toFixed(2) || 'N/A'})`
     );
-
-    // Sort features by absolute SHAP value for better visualization
+  
+    // Sort features by absolute SHAP value
     const featureIndices = explanation.feature_names.map((_, i) => i);
     featureIndices.sort((a, b) => 
       Math.abs(explanation.shap_values[b]) - Math.abs(explanation.shap_values[a])
     );
-
+  
     const sortedLabels = featureIndices.map(i => featureLabels[i]);
-    const sortedValues = featureIndices.map(i => explanation.shap_values[i]);
-
+  
     return {
       chart: {
         type: 'bar',
-        height: 380,
+        height: 360,
         fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+        foreColor: '#333', // Better contrast for PDF export
         toolbar: {
           show: false
+        },
+        animations: {
+          enabled: false // Disable animations for PDF capture
         }
       },
       plotOptions: {
@@ -90,6 +93,7 @@ const StatusReportChart = ({ anomalyReading }) => {
           horizontal: true,
           borderRadius: 2,
           barHeight: '80%',
+          distributed: false,
           colors: {
             ranges: [{
               from: -100, // negative values
@@ -110,44 +114,60 @@ const StatusReportChart = ({ anomalyReading }) => {
         show: false
       },
       tooltip: {
-        shared: false,
-        x: {
-          formatter: function (val) {
-            return val;
-          }
-        },
-        y: {
-          formatter: function (val) {
-            return val.toFixed(4);
-          }
-        }
+        enabled: false // Disable tooltips for PDF export
       },
       title: {
         text: `Feature Impact on "${explanation.predicted_class}" Classification`,
         align: 'center',
         style: {
-          fontSize: '16px',
-          fontWeight: 600
+          fontSize: '14px',
+          fontWeight: 600,
+          color: '#2D3748'
         }
       },
       subtitle: {
         text: 'SHAP Values (higher absolute value = stronger impact)',
-        align: 'center'
+        align: 'center',
+        style: {
+          fontSize: '12px'
+        }
       },
       xaxis: {
         categories: sortedLabels,
         labels: {
+          style: {
+            fontSize: '10px',
+            colors: '#4A5568'
+          },
           formatter: function (val) {
-            return val.toFixed(4);
+            return parseFloat(val).toFixed(4);
           }
+        },
+        axisBorder: {
+          show: true,
+          color: '#E2E8F0'
+        },
+        axisTicks: {
+          show: true,
+          color: '#E2E8F0'
         }
       },
       yaxis: {
         labels: {
           style: {
-            fontSize: '11px'
+            fontSize: '11px',
+            colors: '#4A5568'
           },
-          maxWidth: 150
+          maxWidth: 160
+        }
+      },
+      grid: {
+        borderColor: '#E2E8F0',
+        strokeDashArray: 4,
+        xaxis: {
+          lines: {
+            show: true
+          }
         }
       }
     };
