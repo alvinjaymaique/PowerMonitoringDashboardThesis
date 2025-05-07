@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import StatusReportHeader from "../components/StatusReportHeader";
 import StatusReportChart from "../components/StatusReportChart";
 import StatusReportExplanation from "../components/StatusReportExplanation";
-import "../css/StatusReport.css";
+import "../css/StatusReportPage.css";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 

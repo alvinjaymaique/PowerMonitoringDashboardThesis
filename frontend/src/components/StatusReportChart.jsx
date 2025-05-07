@@ -21,17 +21,41 @@ const StatusReportChart = ({ anomalyReading }) => {
   }, [anomalyReading]);
 
   const fetchExplanation = async (reading) => {
-    setLoading(true);
-    try {
-      const response = await axios.post('/api/explain-anomaly/', { reading });
-      setExplanation(response.data);
-      setError(null);
-    } catch (err) {
-      console.error("Error fetching explanation:", err);
-      setError("Failed to generate explanation. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
+      setLoading(true);
+      try {
+        // Get API base URL from environment or default
+        const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+        
+        // Fix URL construction - remove trailing slash if present
+        const baseUrl = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
+        
+        // Check if baseUrl already includes /api
+        const endpoint = baseUrl.includes('/api') ? 
+          `${baseUrl}/explain-anomaly/` : 
+          `${baseUrl}/api/explain-anomaly/`;
+        
+        console.log(`Requesting SHAP explanation from: ${endpoint}`);
+        
+        // Add more debug information
+        console.log("Sending reading data:", JSON.stringify(reading, null, 2));
+        
+        const response = await axios.post(endpoint, { reading });
+        console.log("SHAP response received:", response.data);
+        setExplanation(response.data);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching explanation:", err);
+        // More detailed error display
+        if (err.response) {
+          console.error("Response data:", err.response.data);
+          console.error("Response status:", err.response.status);
+          setError(`Error ${err.response.status}: ${err.response.data?.error || 'Unknown error'}`);
+        } else {
+          setError("Failed to generate explanation. Please try again later.");
+        }
+      } finally {
+        setLoading(false);
+      }
   };
 
   // Configure waterfall chart
