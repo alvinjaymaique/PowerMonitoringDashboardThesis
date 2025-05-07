@@ -3,12 +3,14 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
   faExclamationTriangle,
+  faSpinner
 } from "@fortawesome/free-solid-svg-icons";
 import {
   isAnomalyByThresholds,
   getAnomalyReason,
 } from "../utils/powerReadingsUtils";
 import { useNavigate } from "react-router-dom";
+import "../css/ReadingRow.css";
 
 /**
  * Component to display a single power reading row
@@ -21,6 +23,25 @@ const ReadingRow = React.memo(({ reading, formatDate, formatTime }) => {
 
   // Get reason for the anomaly
   const anomalyReason = isAnomaly ? getAnomalyReason(reading) : "";
+
+  // Get the specific anomaly type from the API or default to "Yes/No"
+  let anomalyType = "Normal";
+  if (isAnomaly) {
+    anomalyType = reading.anomaly_type || "Yes";
+  }
+  
+  // Remove debug logging
+  // console.log("Reading:", reading.id, "Anomaly Type:", anomalyType, "Is Anomaly:", isAnomaly);
+  
+  // Determine color class based on anomaly type
+  const getAnomalyClass = (type) => {
+    if (type === 'Normal') return "normal-indicator";
+    if (type === 'Classifying...') return "processing-anomaly";
+    if (type === 'Unknown') return "unknown-anomaly";
+    if (type.includes('Excellent') || type.includes('Optimal') || type.includes('Stable')) 
+      return "operational-anomaly";
+    return "true-anomaly";
+  };
 
   return (
     <tr
@@ -71,12 +92,14 @@ const ReadingRow = React.memo(({ reading, formatDate, formatTime }) => {
         style={{ cursor: isAnomaly ? "pointer" : "default" }}
       >
         {isAnomaly ? (
-          <span className="anomaly-indicator" title={anomalyReason}>
-            <FontAwesomeIcon icon={faExclamationTriangle} /> Yes
+          <span className={`anomaly-type ${getAnomalyClass(anomalyType)}`} title={anomalyReason}>
+            <FontAwesomeIcon icon={anomalyType === 'Classifying...' ? faSpinner : faExclamationTriangle} 
+                             spin={anomalyType === 'Classifying...'} /> 
+            {anomalyType}
           </span>
         ) : (
           <span className="normal-indicator">
-            <FontAwesomeIcon icon={faCheck} /> No
+            <FontAwesomeIcon icon={faCheck} /> Normal
           </span>
         )}
       </td>

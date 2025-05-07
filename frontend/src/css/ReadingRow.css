@@ -1,0 +1,48 @@
+/* Add these styles for different anomaly types */
+.anomaly-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  
+  .true-anomaly {
+    background-color: #fecaca;
+    color: #b91c1c;
+    border: 1px solid #ef4444;
+  }
+  
+  .operational-anomaly {
+    background-color: #bfdbfe;
+    color: #1e40af;
+    border: 1px solid #3b82f6;
+  }
+  
+  .normal-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background-color: #d1fae5;
+    color: #047857;
+    border: 1px solid #10b981;
+  }
+
+  .unknown-anomaly {
+    background-color: #fed7aa;
+    color: #9a3412;
+    border: 1px solid #f97316;
+  }
+  
+  .processing-anomaly {
+    background-color: #e2e8f0;
+    color: #475569;
+    border: 1px solid #64748b;
+  }

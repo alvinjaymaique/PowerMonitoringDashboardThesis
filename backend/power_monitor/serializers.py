@@ -36,3 +36,17 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 class UserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=255)
     password = serializers.CharField(max_length=128, write_only=True)
+    
+class PowerReadingSerializer(serializers.Serializer):
+    """Serializer for power reading data"""
+    id = serializers.CharField()
+    deviceId = serializers.CharField()
+    timestamp = serializers.DateTimeField()
+    voltage = serializers.FloatField()
+    current = serializers.FloatField()
+    power = serializers.FloatField()
+    frequency = serializers.FloatField()
+    power_factor = serializers.FloatField()
+    is_anomaly = serializers.BooleanField(default=False)
+    anomaly_parameters = serializers.ListField(child=serializers.CharField(), default=[])
+    anomaly_type = serializers.CharField(default="Normal")  # Ensure this field is included

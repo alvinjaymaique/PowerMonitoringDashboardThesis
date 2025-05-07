@@ -19,6 +19,8 @@ from .views import (
     UserLoginView,
     export_csv,
     user_profile,
+    ClassifyReadingsView,
+    TestMLClassifierView,
 )
 
 # Create a router and register our ViewSets
@@ -50,4 +52,6 @@ urlpatterns = [
     path('power-readings/export-csv/', export_csv, name='export_csv'),
     path('auth/user-profile/', user_profile, name='user-profile'),
     path('firebase/node-date-range/', NodeDateRangeView.as_view(), name='node-date-range'),
+    path('classify-readings/', ClassifyReadingsView.as_view(), name='classify-readings'),
+    path('test-ml-classifier/', TestMLClassifierView.as_view(), name='test-ml-classifier'),
 ]

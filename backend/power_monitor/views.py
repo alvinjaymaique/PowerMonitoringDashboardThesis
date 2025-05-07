@@ -30,6 +30,13 @@ from rest_framework.response import Response
 from rest_framework import status
 from .services.cache_service import CacheService
 
+# Import the ML service
+from .services.classifier_service import MLAnomalyClassifier
+
+anomaly_detector = AnomalyDetectionService()
+# Initialize the ML classifier (singleton pattern)
+ml_classifier = MLAnomalyClassifier()
+
 # Add these new view classes at the end of the file:
 
 class CacheStatsView(APIView):
@@ -529,7 +536,9 @@ class NodeDataView(APIView):
             month = request.query_params.get('month')
             day = request.query_params.get('day')
             use_cache = request.query_params.get('use_cache', 'true').lower() == 'true'
-            since_timestamp = request.query_params.get('since_timestamp')  # New parameter
+            since_timestamp = request.query_params.get('since_timestamp')
+            limit = int(request.query_params.get('limit', '1000'))
+            classify = request.query_params.get('classify', 'false').lower() == 'true'
             
             if not node or not year or not month:
                 return Response(
@@ -539,8 +548,7 @@ class NodeDataView(APIView):
             
             firebase_service = FirebaseService()
             
-            # If day is provided, fetch data for that day
-            # Otherwise, fetch data for the entire month
+            # Fetch data
             if day:
                 data = firebase_service.get_day_data(
                     node, year, month, day, 
@@ -554,7 +562,38 @@ class NodeDataView(APIView):
                     since_timestamp=since_timestamp
                 )
             
-            return Response(data)
+            # Apply sampling to reduce data volume if needed
+            if len(data) > limit:
+                # Keep first and last readings
+                first_readings = data[:10]
+                last_readings = data[-10:]
+                
+                # Sample the middle readings
+                step = max(1, (len(data) - 20) // (limit - 20))
+                middle_readings = data[10:-10:step]
+                
+                # Combine and sort
+                data = first_readings + middle_readings + last_readings
+                data.sort(key=lambda x: x['timestamp'])
+                
+                print(f"NodeDataView: Sampled data from {len(data)} to {limit} readings")
+                
+            print(f"NodeDataView: Fetched {len(data)} readings")
+
+            # Apply threshold-based anomaly detection
+            detected_readings = anomaly_detector.detect_anomalies(data)
+            
+            anomaly_count = sum(1 for r in detected_readings if r.get('is_anomaly', False))
+            print(f"NodeDataView: Detected {anomaly_count} anomalies out of {len(detected_readings)} readings")
+            
+            # Mark anomalies for lazy classification instead of classifying immediately
+            for reading in detected_readings:
+                if reading.get('is_anomaly', False):
+                    reading['anomaly_type'] = 'Unclassified'
+                else:
+                    reading['anomaly_type'] = 'Normal'
+            
+            return Response(detected_readings)
             
         except Exception as e:
             import traceback
@@ -705,57 +744,13 @@ class DashboardDataView(APIView):
         if not readings:
             return []
         
-        # Define thresholds
-        thresholds = {
-            'voltage': {'min': 217.4, 'max': 242.6},
-            'current': {'min': 0, 'max': 50},
-            'power': {'min': 0, 'max': 10000},
-            'frequency': {'min': 59.2, 'max': 60.8},
-            'power_factor': {'min': 0.792, 'max': 1.0}
-        }
+        # First detect anomalies using threshold-based method
+        processed_readings = anomaly_detector.detect_anomalies(readings)
         
-        # Process each reading
-        processed_readings = []
-        for reading in readings:
-            # Clone the reading
-            processed = dict(reading)
-            
-            anomaly_parameters = []
-            is_anomaly = False
-            
-            # Check each parameter against thresholds
-            if 'voltage' in processed and (processed['voltage'] < thresholds['voltage']['min'] or 
-                                          processed['voltage'] > thresholds['voltage']['max']):
-                anomaly_parameters.append('voltage')
-                is_anomaly = True
-                
-            if 'current' in processed and (processed['current'] < thresholds['current']['min'] or 
-                                          processed['current'] > thresholds['current']['max']):
-                anomaly_parameters.append('current')
-                is_anomaly = True
-                
-            if 'power' in processed and (processed['power'] < thresholds['power']['min'] or 
-                                        processed['power'] > thresholds['power']['max']):
-                anomaly_parameters.append('power')
-                is_anomaly = True
-                
-            if 'frequency' in processed and (processed['frequency'] < thresholds['frequency']['min'] or 
-                                            processed['frequency'] > thresholds['frequency']['max']):
-                anomaly_parameters.append('frequency')
-                is_anomaly = True
-                
-            if 'power_factor' in processed and (processed['power_factor'] < thresholds['power_factor']['min'] or 
-                                               processed['power_factor'] > thresholds['power_factor']['max']):
-                anomaly_parameters.append('power_factor')
-                is_anomaly = True
-            
-            # Update reading with anomaly information
-            processed['is_anomaly'] = is_anomaly
-            processed['anomaly_parameters'] = anomaly_parameters
-            
-            processed_readings.append(processed)
-            
-        return processed_readings
+        # Then apply ML classifier to categorize anomalies
+        classified_readings = ml_classifier.classify_batch(processed_readings)
+        
+        return classified_readings
     
     def sample_data(self, data, sampling_rate):
         """Sample data while preserving anomalies"""
@@ -1284,3 +1279,140 @@ def user_profile(request):
         'role': 'Admin' if user.is_staff else 'User',
         # Add any other user fields you want to expose
     })
+
+class ClassifyReadingsView(APIView):
+    """View for classifying a batch of readings"""
+    
+    def post(self, request):
+        try:
+            readings = request.data.get('readings', [])
+            
+            if not readings:
+                return Response(
+                    {"error": "No readings provided"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+            print(f"ClassifyReadingsView: Received {len(readings)} readings for classification")
+            
+            # Only classify readings that are marked as anomalies
+            anomaly_readings = [r for r in readings if r.get('is_anomaly', False)]
+            
+            if not anomaly_readings:
+                return Response({"classifications": {}})
+            
+            # Classify the readings
+            classified_readings = ml_classifier.classify_batch(anomaly_readings)
+            
+            # Return only the classifications to reduce response size
+            classifications = {}
+            for reading in classified_readings:
+                if 'id' in reading and 'anomaly_type' in reading:
+                    classifications[reading['id']] = reading['anomaly_type']
+            
+            print(f"ClassifyReadingsView: Successfully classified {len(classifications)} readings")
+            return Response({"classifications": classifications})
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {"error": f"Failed to classify readings: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class TestMLClassifierView(APIView):
+    """Test ML classifier functionality"""
+    
+    def get(self, request):
+        try:
+            # Create sample test readings with typical anomalies
+            test_readings = []
+            
+            # Low power factor (LowPF_ReactiveLoad)
+            test_readings.append({
+                'id': 'test-1-lowpf',
+                'deviceId': 'C-1',
+                'timestamp': '2025-03-18T15:42:49',
+                'voltage': 235.9,
+                'current': 0.723,
+                'power': 86.7,
+                'frequency': 59.8,
+                'power_factor': 0.51,
+                'is_anomaly': True,
+                'anomaly_parameters': ['power_factor']
+            })
+            
+            # Undervoltage (LightLoad_Undervoltage)
+            test_readings.append({
+                'id': 'test-2-uv',
+                'deviceId': 'C-1',
+                'timestamp': '2025-03-18T15:40:40',
+                'voltage': 210.0,
+                'current': 0.862,
+                'power': 122.4,
+                'frequency': 59.8,
+                'power_factor': 0.82,
+                'is_anomaly': True,
+                'anomaly_parameters': ['voltage']
+            })
+            
+            # Overvoltage (Idle_Overvoltage)
+            test_readings.append({
+                'id': 'test-3-ov',
+                'deviceId': 'C-1',
+                'timestamp': '2025-03-18T15:39:30',
+                'voltage': 245.0,
+                'current': 0.12,
+                'power': 28.5,
+                'frequency': 60.1,
+                'power_factor': 0.93,
+                'is_anomaly': True,
+                'anomaly_parameters': ['voltage']
+            })
+            
+            # Idle state (Idle_Stable)
+            test_readings.append({
+                'id': 'test-4-idle',
+                'deviceId': 'C-1',
+                'timestamp': '2025-03-18T15:38:20',
+                'voltage': 238.0,
+                'current': 0.0,
+                'power': 0.0,
+                'frequency': 60.0,
+                'power_factor': 0.0,
+                'is_anomaly': True,
+                'anomaly_parameters': ['current']
+            })
+            
+            # Normal reading
+            test_readings.append({
+                'id': 'test-5-normal',
+                'deviceId': 'C-1',
+                'timestamp': '2025-03-18T15:30:30',
+                'voltage': 230.0,
+                'current': 0.5,
+                'power': 100.0,
+                'frequency': 60.0,
+                'power_factor': 0.95,
+                'is_anomaly': False,
+                'anomaly_parameters': []
+            })
+            
+            # Apply classifier
+            classified_readings = ml_classifier.classify_batch(test_readings)
+            
+            return Response({
+                'model_info': {
+                    'type': str(type(ml_classifier.model)),
+                    'labels': ml_classifier.anomaly_labels
+                },
+                'classified_readings': classified_readings
+            })
+            
+        except Exception as e:
+            import traceback
+            return Response(
+                {"error": str(e), "traceback": traceback.format_exc()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
