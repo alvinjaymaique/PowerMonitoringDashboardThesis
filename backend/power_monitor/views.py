@@ -543,7 +543,7 @@ class NodeDataView(APIView):
             day = request.query_params.get('day')
             use_cache = request.query_params.get('use_cache', 'true').lower() == 'true'
             since_timestamp = request.query_params.get('since_timestamp')
-            limit = int(request.query_params.get('limit', '1000'))
+            limit = int(request.query_params.get('limit', '5000000'))
             classify = request.query_params.get('classify', 'false').lower() == 'true'
             
             if not node or not year or not month:
