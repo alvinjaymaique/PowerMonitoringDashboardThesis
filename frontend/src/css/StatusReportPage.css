@@ -85,12 +85,14 @@ body, html {
   box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
 }
 
-.chart-header h3 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-  font-weight: bold;
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
-
 .chart-content {
   min-height: 250px; /* Change from fixed height to min-height */
   height: auto; /* Allow content to expand */
@@ -128,6 +130,16 @@ body, html {
   padding: 1rem;
   overflow: visible;
 }
+
+/* Classification header styling */
+.explanation-content h3 {
+  font-size: 1.4rem;
+  color: #2c5282;
+  border-bottom: 2px solid #bee3f8;
+  padding-bottom: 0.7rem;
+  margin-bottom: 1.2rem;
+}
+
 .back-button-container {
   display: flex;
   justify-content: flex-start;
@@ -169,4 +181,131 @@ body, html {
     width: 95%;
     margin-left: 2.5%;
   }
+}
+
+/* Parameter values with better visualization */
+.parameter-values {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.parameter-item {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 0.8rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  border-left: 3px solid #4299e1;
+}
+
+.parameter-label {
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+
+.parameter-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+/* Styling for different anomaly types */
+.anomaly-type-normal {
+  border-left-color: #48bb78;
+}
+
+.anomaly-type-voltage {
+  border-left-color: #f6ad55;
+}
+
+.anomaly-type-frequency {
+  border-left-color: #805ad5;
+}
+
+.anomaly-type-pf {
+  border-left-color: #f56565;
+}
+
+/* Timestamp styling */
+.timestamp-info {
+  background-color: #ebf8ff;
+  border-radius: 6px;
+  padding: 0.8rem 1rem;
+  margin-top: 1rem;
+  color: #2b6cb0;
+  font-size: 0.9rem;
+}
+
+/* For operational anomalies */
+.operational-note {
+  background-color: #e6fffa;
+  border-left: 4px solid #38b2ac;
+  padding: 1rem;
+  margin-top: 1.5rem;
+  border-radius: 6px;
+  color: #285e61;
+}
+
+.waterfall-container {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+  background-color: #fafafa;
+}
+
+.base-value-info {
+  background-color: #ebf8ff;
+  border-radius: 6px;
+  padding: 0.8rem 1rem;
+  margin-top: 1.5rem;
+  color: #2b6cb0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Feature labels formatting */
+.apexcharts-yaxis-label {
+  font-weight: 600 !important;
+}
+
+/* Bar values formatting */
+.apexcharts-tooltip {
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Loading state improvements */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 1.5rem;
+}
+
+.loading-container .spinner {
+  font-size: 2.5rem;
+  color: #38a169;
+}
+
+.loading-container p {
+  font-size: 1.1rem;
+  color: #4a5568;
+  font-weight: 500;
+}
+
+/* Error state styling */
+.error-container {
+  padding: 1.5rem;
+  background-color: #fff5f5;
+  border-left: 4px solid #e53e3e;
+  border-radius: 4px;
+  color: #c53030;
+  font-weight: 500;
 }
