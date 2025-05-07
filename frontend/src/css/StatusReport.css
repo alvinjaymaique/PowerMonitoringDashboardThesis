@@ -1,3 +1,13 @@
+.status-report-page {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 100vh;
+  max-height: none; /* Remove max-height restriction */
+  overflow-y: visible; /* Let the content flow naturally */
+  padding: 1rem;
+}
+
 .status-report-header {
   display: flex;
   justify-content: space-between;
@@ -56,10 +66,10 @@
 .status-report-chart {
   background-color: white;
   border-radius: 12px;
-  padding: 2rem;
-  margin: 6vh auto; /* 20% top and bottom margin */
-  width: 80%; /* keeps spacing on the sides */
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1); /* floating effect */
+  padding: 1.5rem;
+  margin: 2vh auto; /* Reduced from 6vh */
+  width: 80%;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -76,12 +86,15 @@
 }
 
 .chart-content {
-  min-height: 350px;
+  min-height: 250px; /* Change from fixed height to min-height */
+  height: auto; /* Allow content to expand */
   display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #888;
-  font-style: italic;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  color: #333;
+  padding: 1rem;
+  overflow: visible;
 }
 
 .status-report-explanation {
@@ -89,9 +102,9 @@
   padding: 1rem;
   border-left: 4px solid #7ed6df;
   border-radius: 8px;
-  margin: 2.5vh auto; /* 20% top and bottom margin */
-  width: 80%; /* keeps spacing on the sides */
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1); /* floating effect */
+  margin: 2vh auto; /* Reduced from 2.5vh */
+  width: 80%;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -100,15 +113,21 @@
   margin-bottom: 0.5rem;
 }
 .explanation-content {
-  min-height: 150px;
+  min-height: 100px; /* Change from fixed height to min-height */
+  height: auto; /* Allow content to expand */
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 1rem;
+  overflow: visible;
 }
 .back-button-container {
   display: flex;
   justify-content: flex-start;
-  margin-top: 1rem;
+  margin: 2rem 0 3rem 10%; /* Add more bottom margin */
+  width: 80%;
+  position: relative; /* Ensure proper positioning */
 }
 
 .back-button {
@@ -119,6 +138,7 @@
   font-size: 1rem;
   border-radius: 5px;
   cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 .back-button:hover {
@@ -127,4 +147,17 @@
 #root {
   background-color: #d9eeda;
   min-height: 100vh;
+}
+
+/* Add media queries for better responsive behavior */
+@media (max-width: 768px) {
+  .status-report-chart,
+  .status-report-explanation {
+    width: 95%;
+  }
+  
+  .back-button-container {
+    width: 95%;
+    margin-left: 2.5%;
+  }
 }
