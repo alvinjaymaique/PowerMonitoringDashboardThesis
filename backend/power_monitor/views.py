@@ -1293,7 +1293,7 @@ class ClassifyReadingsView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
                 
-            print(f"ClassifyReadingsView: Received {len(readings)} readings for classification")
+            # print(f"ClassifyReadingsView: Received {len(readings)} readings for classification")
             
             # Only classify readings that are marked as anomalies
             anomaly_readings = [r for r in readings if r.get('is_anomaly', False)]
@@ -1310,7 +1310,7 @@ class ClassifyReadingsView(APIView):
                 if 'id' in reading and 'anomaly_type' in reading:
                     classifications[reading['id']] = reading['anomaly_type']
             
-            print(f"ClassifyReadingsView: Successfully classified {len(classifications)} readings")
+            # print(f"ClassifyReadingsView: Successfully classified {len(classifications)} readings")
             return Response({"classifications": classifications})
             
         except Exception as e:

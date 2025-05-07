@@ -1,8 +1,13 @@
+from joblib import load
+from django.conf import settings
 import os
 import numpy as np
 import pandas as pd
-from joblib import load
-from django.conf import settings
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger(__name__)
 
 class MLAnomalyClassifier:
     """Service for classifying power anomalies using the trained Random Forest model."""
@@ -15,22 +20,12 @@ class MLAnomalyClassifier:
             
             # Check if model file exists
             if not os.path.exists(model_path):
-                print(f"ERROR: Model file not found at {model_path}")
-                print(f"Current working directory: {os.getcwd()}")
-                print(f"BASE_DIR: {settings.BASE_DIR}")
-                
-                # Try to list the directory contents
-                ml_dir = os.path.join(settings.BASE_DIR, 'ml_model')
-                if os.path.exists(ml_dir):
-                    print(f"Files in ml_model directory: {os.listdir(ml_dir)}")
-                else:
-                    print(f"ml_model directory doesn't exist at {ml_dir}")
-                    
+                logger.error(f"Model file not found at {model_path}")
                 raise FileNotFoundError(f"Model file not found at {model_path}")
             
-            print(f"Loading model from {model_path}")
+            logger.info(f"Loading model from {model_path}")
             self.model = load(model_path)
-            print(f"Model loaded successfully: {type(self.model)}")
+            logger.info(f"Model loaded successfully")
             
             # Define anomaly class labels mapping
             self.anomaly_labels = {
@@ -53,17 +48,13 @@ class MLAnomalyClassifier:
             
             # Features needed for the model (in the correct order and with correct names)
             self.features = [
-                'voltage', 'current', 'frequency', 'power', 'powerFactor',  # Changed from power_factor to powerFactor
+                'voltage', 'current', 'frequency', 'power', 'powerFactor',  
                 'voltage_deviation', 'frequency_deviation', 'pf_deviation', 
                 'power_voltage_ratio', 'current_voltage_ratio'
             ]
             
-            print(f"Classifier initialized with {len(self.anomaly_labels)} anomaly types")
-            
         except Exception as e:
-            import traceback
-            print(f"ERROR initializing ML classifier: {str(e)}")
-            traceback.print_exc()
+            logger.error(f"ERROR initializing ML classifier: {str(e)}")
             raise e
         
     def prepare_features(self, reading):
@@ -71,7 +62,7 @@ class MLAnomalyClassifier:
         try:
             # Ensure we have the basic required features
             if not all(key in reading for key in ['voltage', 'current', 'power', 'frequency', 'power_factor']):
-                print(f"Reading missing required features: {reading}")
+                logger.warning(f"Reading missing required features")
                 return None
                     
             # Create derived features - using the EXACT feature names expected by the model
@@ -88,28 +79,10 @@ class MLAnomalyClassifier:
                 'current_voltage_ratio': reading['current'] / (reading['voltage'] + 0.1)
             }
             
-            # Debug info - print feature values
-            print(f"Features calculated for {reading.get('id', 'unknown')}:")
-            for f in ['voltage', 'current', 'frequency', 'power', 'powerFactor', 
-                    'voltage_deviation', 'frequency_deviation', 'pf_deviation',
-                    'power_voltage_ratio', 'current_voltage_ratio']:
-                print(f"  {f}: {feature_dict[f]}")
-                    
             # Return as pandas DataFrame with exactly the feature names expected by the model
-            import pandas as pd
-            
-            # Make sure self.features also uses the correct names
-            features = [
-                'voltage', 'current', 'frequency', 'power', 'powerFactor',
-                'voltage_deviation', 'frequency_deviation', 'pf_deviation', 
-                'power_voltage_ratio', 'current_voltage_ratio'
-            ]
-            
-            return pd.DataFrame([feature_dict], columns=features)
+            return pd.DataFrame([feature_dict], columns=self.features)
         except Exception as e:
-            print(f"Error preparing features: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Error preparing features: {str(e)}")
             return None
         
     def classify_anomaly(self, reading):
@@ -124,7 +97,7 @@ class MLAnomalyClassifier:
             
         # Make prediction
         try:
-            # Get raw prediction - less verbose logging
+            # Get raw prediction without logging
             prediction = self.model.predict(features)[0]
             
             # Handle the prediction based on its type
@@ -140,30 +113,22 @@ class MLAnomalyClassifier:
                 # If it's already a string label, use it directly
                 anomaly_type = str(prediction)
             
-            # Log only occasionally to reduce console spam
-            if reading.get('id', '').endswith('0'):  # Log only every 10th reading
-                print(f"Classified {reading.get('id', 'unknown')} as '{anomaly_type}'")
-                
             return anomaly_type
         except Exception as e:
-            print(f"Error classifying reading {reading.get('id', 'unknown')}: {e}")
+            logger.error(f"Error classifying reading {reading.get('id', 'unknown')}: {str(e)}")
             return 'Unknown'
         
     def classify_batch(self, readings):
         """Classify a batch of readings."""
-        print(f"Classifying batch of {len(readings)} readings")
+        logger.info(f"Classifying batch of {len(readings)} readings")
         anomaly_count = 0
         
         for i, reading in enumerate(readings):
             if reading['is_anomaly']:
                 reading['anomaly_type'] = self.classify_anomaly(reading)
                 anomaly_count += 1
-                
-                # Only log every 10th reading to reduce console spam
-                if i % 10 == 0: 
-                    print(f"Processed {i}/{len(readings)} readings - current: {reading.get('id', 'unknown')}")
             else:
                 reading['anomaly_type'] = 'Normal'
         
-        print(f"Classification complete. Found {anomaly_count} anomalies in {len(readings)} readings.")
+        logger.info(f"Classification complete. Found {anomaly_count} anomalies in {len(readings)} readings.")
         return readings

@@ -17,7 +17,7 @@ const DataTable = ({ readings }) => {
                                            r.anomaly_type === 'Unknown'));
     
     if (anomalyReadings.length > 0 && !isClassifying) {
-      console.log(`Requesting classification for ${anomalyReadings.length} anomalies`);
+      // console.log(`Requesting classification for ${anomalyReadings.length} anomalies`);
       setIsClassifying(true);
       
       // FIX: Remove any trailing slash to prevent double slashes
@@ -28,13 +28,13 @@ const DataTable = ({ readings }) => {
         `${baseUrl}/classify-readings/` : 
         `${baseUrl}/api/classify-readings/`;
       
-      console.log(`Sending request to: ${endpoint}`);
+      // console.log(`Sending request to: ${endpoint}`);
       
       // Request classifications for these readings with corrected URL
       axios.post(endpoint, { readings: anomalyReadings })
         .then(response => {
           const { classifications } = response.data;
-          console.log('Received classifications:', classifications);
+          // console.log('Received classifications:', classifications);
           setClassifiedReadings(prev => ({...prev, ...classifications}));
           setIsClassifying(false);
         })
