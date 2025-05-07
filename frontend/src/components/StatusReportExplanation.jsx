@@ -35,42 +35,63 @@ const StatusReportExplanation = ({ anomalyReading }) => {
     
     return explanations[anomalyReading.anomaly_type] || 'Classification details not available';
   };
+  
+  // Determine parameter class based on type
+  const getParameterClass = (paramName) => {
+    if (paramName === 'voltage') return 'anomaly-type-voltage';
+    if (paramName === 'frequency') return 'anomaly-type-frequency';
+    if (paramName === 'power_factor') return 'anomaly-type-pf';
+    return 'anomaly-type-normal';
+  };
 
   return (
     <div className="status-report-explanation">
-      <h4>In depth explanation</h4>
+      <h4>Anomaly Classification Details</h4>
       <div className="explanation-content">
         {hasClassification ? (
           <>
             <h3>Anomaly Classification: {anomalyReading.anomaly_type}</h3>
-            <p><strong>Explanation:</strong> {getTypeExplanation()}</p>
+            <p><strong>Characteristics:</strong> {getTypeExplanation()}</p>
             <p><strong>Abnormal Parameters:</strong> {getAnomalyFeatures().join(', ')}</p>
-            <p><strong>Timestamp:</strong> {new Date(anomalyReading.timestamp).toLocaleString()}</p>
-            <p><strong>Values:</strong></p>
-            <ul>
-              <li>Voltage: {anomalyReading.voltage}V</li>
-              <li>Current: {anomalyReading.current}A</li>
-              <li>Power: {anomalyReading.power}W</li>
-              <li>Frequency: {anomalyReading.frequency}Hz</li>
-              <li>Power Factor: {anomalyReading.power_factor}</li>
-            </ul>
+            
+            <div className="timestamp-info">
+              <strong>Recorded at:</strong> {new Date(anomalyReading.timestamp).toLocaleString()}
+            </div>
+            
+            <div className="parameter-values">
+              <div className={`parameter-item ${getParameterClass('voltage')}`}>
+                <div className="parameter-label">Voltage</div>
+                <div className="parameter-value">{anomalyReading.voltage}V</div>
+              </div>
+              
+              <div className={`parameter-item ${getParameterClass('current')}`}>
+                <div className="parameter-label">Current</div>
+                <div className="parameter-value">{anomalyReading.current}A</div>
+              </div>
+              
+              <div className={`parameter-item ${getParameterClass('power')}`}>
+                <div className="parameter-label">Power</div>
+                <div className="parameter-value">{anomalyReading.power}W</div>
+              </div>
+              
+              <div className={`parameter-item ${getParameterClass('frequency')}`}>
+                <div className="parameter-label">Frequency</div>
+                <div className="parameter-value">{anomalyReading.frequency}Hz</div>
+              </div>
+              
+              <div className={`parameter-item ${getParameterClass('power_factor')}`}>
+                <div className="parameter-label">Power Factor</div>
+                <div className="parameter-value">{anomalyReading.power_factor}</div>
+              </div>
+            </div>
+            
             {anomalyReading.anomaly_type.includes('Excellent') || 
              anomalyReading.anomaly_type.includes('Optimal') || 
              anomalyReading.anomaly_type.includes('Stable') ? (
               <div className="operational-note">
-                <p>This is an operational anomaly, indicating a normal operating state that differs from baseline. 
-                No corrective action is required.</p>
+                <p>This is an operational anomaly, indicating a normal operating state that differs from baseline. This reading is within acceptable operational parameters.</p>
               </div>
-            ) : (
-              <div className="action-suggestions">
-                <p><strong>Recommended Actions:</strong></p>
-                <ul>
-                  <li>Monitor the parameter trends over the next 24 hours</li>
-                  <li>Check electrical connections and load distribution</li>
-                  <li>Consider adjusting protection relay settings if anomalies persist</li>
-                </ul>
-              </div>
-            )}
+            ) : null}
           </>
         ) : (
           <p>Select an anomaly from the table to view detailed analysis.</p>
