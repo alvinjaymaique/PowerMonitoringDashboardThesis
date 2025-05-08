@@ -1,0 +1,376 @@
+:root {
+    --primary-color: #2f855a;
+    --primary-hover: #38a169;
+    --primary-light: #f0fff4;
+    --primary-border: #e2e8f0;
+    --text-dark: #2d3748;
+    --text-medium: #4a5568;
+    --text-light: #718096;
+    --bg-light: #f7fafc;
+    --bg-white: #ffffff;
+    --danger-color: #e53e3e;
+    --danger-hover: #f56565;
+    --disabled-color: #a0aec0;
+    --accent-blue: #3182ce;
+    --accent-blue-light: #ebf8ff;
+  }
+  
+  /* Modal overlay */
+  .status-report-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  
+  /* Modal container */
+  .status-report-modal {
+    background-color: var(--bg-white);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 1200px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Modal header */
+  .status-report-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--primary-border);
+  }
+  
+  .status-report-modal-header h2 {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    margin: 0;
+  }
+  
+  .close-button {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.2s;
+  }
+  
+  .close-button:hover {
+    color: var(--danger-color);
+  }
+  
+  /* Modal toolbar */
+  .status-report-modal-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--primary-border);
+    background-color: var(--bg-light);
+  }
+  
+  .status-report-modal-content {
+    padding: 20px;
+    overflow-y: auto;
+  }
+  
+  /* Date selector styling */
+  .date-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .date-label {
+    font-size: 1rem;
+    color: var(--text-medium);
+  }
+  
+  .date-picker {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--primary-border);
+    color: var(--text-dark);
+  }
+  
+  .date-picker:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(47, 133, 90, 0.2);
+  }
+  
+  /* Download button styling */
+  .download-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: var(--primary-color);
+    color: var(--bg-white);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+  
+  .download-button:hover:not(:disabled) {
+    background-color: var(--primary-hover);
+  }
+  
+  .download-button:disabled {
+    background-color: var(--disabled-color);
+    cursor: not-allowed;
+  }
+  
+  /* Content components styling */
+  .status-report-modal-content .status-report-chart,
+  .status-report-modal-content .status-report-explanation {
+    margin: 1vh auto;
+    width: 95%;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* StatusReportChart component styling */
+  .status-report-chart {
+    background-color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    width: 100%;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    page-break-inside: avoid;
+  }
+  
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 0.8rem;
+  }
+  
+  .chart-header h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin: 0;
+  }
+  
+  .chart-content {
+    min-height: 250px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    color: var(--text-dark);
+    padding: 1rem;
+    overflow: visible;
+  }
+  
+  /* StatusReportExplanation component styling */
+  .status-report-explanation {
+    background-color: #f5f5f5;
+    padding: 1rem;
+    border-left: 4px solid #7ed6df;
+    border-radius: 8px;
+    width: 100%;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .status-report-explanation h4 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .explanation-content {
+    min-height: 100px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 1rem;
+    overflow: visible;
+  }
+  
+  /* Classification header styling */
+  .explanation-content h3 {
+    font-size: 1.4rem;
+    color: #2c5282;
+    border-bottom: 2px solid #bee3f8;
+    padding-bottom: 0.7rem;
+    margin-bottom: 1.2rem;
+  }
+  
+  /* Parameter values styling */
+  .parameter-values {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+    width: 100%;
+  }
+  
+  .parameter-item {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 0.8rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    border-left: 3px solid #4299e1;
+  }
+  
+  .parameter-label {
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+  
+  .parameter-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #2d3748;
+  }
+  
+  /* Styling for different anomaly types */
+  .anomaly-type-normal {
+    border-left-color: #48bb78;
+  }
+  
+  .anomaly-type-voltage {
+    border-left-color: #f6ad55;
+  }
+  
+  .anomaly-type-frequency {
+    border-left-color: #805ad5;
+  }
+  
+  .anomaly-type-pf {
+    border-left-color: #f56565;
+  }
+  
+  /* Timestamp styling */
+  .timestamp-info {
+    background-color: var(--accent-blue-light);
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    margin-top: 1rem;
+    color: var(--accent-blue);
+    font-size: 0.9rem;
+  }
+  
+  /* For operational anomalies */
+  .operational-note {
+    background-color: #e6fffa;
+    border-left: 4px solid #38b2ac;
+    padding: 1rem;
+    margin-top: 1.5rem;
+    border-radius: 6px;
+    color: #285e61;
+  }
+  
+  /* Explanation notes */
+  .explanation-note {
+    font-size: 0.9rem;
+    color: #4a5568;
+    background-color: var(--primary-light);
+    border-left: 4px solid var(--primary-color);
+    padding: 0.8rem 1rem;
+    margin-bottom: 1.2rem;
+    line-height: 1.5;
+    border-radius: 4px;
+    page-break-inside: avoid;
+  }
+  
+  /* Waterfall chart container */
+  .waterfall-container {
+    width: 100%;
+    height: 100%;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    background-color: #fafafa;
+    padding: 0.5rem;
+    page-break-inside: avoid;
+  }
+  
+  .base-value-info {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #555;
+    background-color: #f0f9ff;
+    border-radius: 4px;
+    padding: 0.7rem;
+    color: var(--accent-blue);
+    font-weight: 500;
+  }
+  
+  /* Loading state styling */
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 250px;
+  }
+  
+  .spinner {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+  }
+  
+  .error-container {
+    color: var(--danger-color);
+    text-align: center;
+    padding: 2rem;
+  }
+  
+  /* Media queries for better responsiveness */
+  @media (max-width: 768px) {
+    .status-report-modal {
+      width: 95%;
+      max-height: 85vh;
+    }
+    
+    .status-report-modal-toolbar {
+      flex-direction: column;
+      gap: 10px;
+      align-items: stretch;
+    }
+    
+    .date-selector {
+      width: 100%;
+      justify-content: space-between;
+    }
+    
+    .download-button {
+      width: 100%;
+      justify-content: center;
+    }
+    
+    .parameter-values {
+      grid-template-columns: 1fr;
+    }
+  }

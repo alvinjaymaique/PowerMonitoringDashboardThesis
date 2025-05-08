@@ -3,9 +3,29 @@ import axios from 'axios';
 import ReadingRow from './ReadingRow';
 import { formatDate, formatTime } from '../utils/powerReadingsUtils';
 
-const DataTable = ({ readings }) => {
+const DataTable = ({ readings, onShowStatusReport }) => {
   const [classifiedReadings, setClassifiedReadings] = useState({});
   const [isClassifying, setIsClassifying] = useState(false);
+
+  // In the parent component where DataTable is used:
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [selectedAnomaly, setSelectedAnomaly] = useState(null);
+
+  const handleShowStatusReport = (reading) => {
+    setSelectedAnomaly(reading);
+    setShowStatusModal(true);
+  };
+
+  // Then in your JSX where you render components:
+  <DataTable readings={readings} onShowStatusReport={handleShowStatusReport} />
+
+  {/* Add the modal at the end of your component */}
+  {showStatusModal && (
+    <StatusReportModal 
+      anomalyReading={selectedAnomaly} 
+      onClose={() => setShowStatusModal(false)} 
+    />
+  )}
 
   // Fix API URL construction
   const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -92,6 +112,7 @@ const DataTable = ({ readings }) => {
               reading={{...reading, anomaly_type: getAnomalyType(reading)}}
               formatDate={formatDate}
               formatTime={formatTime}
+              onShowStatusReport={onShowStatusReport}
             />
           ))}
         </tbody>

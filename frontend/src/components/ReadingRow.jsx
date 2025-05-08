@@ -9,15 +9,12 @@ import {
   isAnomalyByThresholds,
   getAnomalyReason,
 } from "../utils/powerReadingsUtils";
-import { useNavigate } from "react-router-dom";
 import "../css/ReadingRow.css";
 
 /**
  * Component to display a single power reading row
  */
-const ReadingRow = React.memo(({ reading, formatDate, formatTime }) => {
-  const navigate = useNavigate();
-
+const ReadingRow = React.memo(({ reading, formatDate, formatTime, onShowStatusReport }) => {
   // Check if anomalous by thresholds or by the server-side flag
   const isAnomaly = reading.is_anomaly || isAnomalyByThresholds(reading);
 
@@ -29,9 +26,6 @@ const ReadingRow = React.memo(({ reading, formatDate, formatTime }) => {
   if (isAnomaly) {
     anomalyType = reading.anomaly_type || "Yes";
   }
-
-  // Remove debug logging
-  // console.log("Reading:", reading.id, "Anomaly Type:", anomalyType, "Is Anomaly:", isAnomaly);
 
   // Determine color class based on anomaly type
   const getAnomalyClass = (type) => {
@@ -89,13 +83,9 @@ const ReadingRow = React.memo(({ reading, formatDate, formatTime }) => {
       <td
         className={isAnomaly ? "anomaly-cell" : "normal-cell"}
         onClick={() => {
-          if (isAnomaly) {
-            navigate("/status-report", {
-              state: {
-                anomalyReading: reading,
-                selectedDate: reading.timestamp,
-              },
-            });
+          if (isAnomaly && typeof onShowStatusReport === 'function') {
+            // Only call if onShowStatusReport is provided and is a function
+            onShowStatusReport(reading);
           }
         }}
         style={{ cursor: isAnomaly ? "pointer" : "default" }}

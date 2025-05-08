@@ -20,13 +20,18 @@ import {
   FilterDisplay 
 } from './LoadingIndicator';
 import ParameterFiltersModal from './ParameterFiltersModal';
+import StatusReportModal from './StatusReportModal';
 
 // Utilities
 import { getMonthName } from '../utils/powerReadingsUtils';
-
 import axios from 'axios';
 
 const PowerReadings = () => {
+  // Add these state variables
+  const [showStatusReport, setShowStatusReport] = useState(false);
+  const [selectedAnomaly, setSelectedAnomaly] = useState(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  
   // Set up hooks
   const {
     showFilterModal,
@@ -88,6 +93,16 @@ const PowerReadings = () => {
     changeItemsPerPage
   } = usePagination(filteredReadings, 10);
   
+  // Handler functions for status report
+  const handleShowStatusReport = (reading) => {
+    setSelectedAnomaly(reading);
+    setShowStatusReport(true);
+  };
+
+  const handleCloseStatusReport = () => {
+    setShowStatusReport(false);
+  };
+  
   // When filters change, reset to page 1
   useEffect(() => {
     setCurrentPage(1);
@@ -104,87 +119,75 @@ const PowerReadings = () => {
     }
   };
 
-// Add this state to track download progress
-const [isDownloading, setIsDownloading] = useState(false);
-
-// Replace your handleDownloadCSV function with this implementation
-const handleDownloadCSV = async () => {
-  try {
-    // Only proceed if we have a selected node
-    if (!filters.node) {
-      alert('Please select a node first');
-      return;
-    }
-    
-    // Show loading state
-    setIsDownloading(true);
-    
-    // Prepare the query parameters
-    const params = {
-      node: filters.node,
-      // Include parameter filters if they exist
-      ...(filters.voltage_min && { voltage_min: filters.voltage_min }),
-      ...(filters.voltage_max && { voltage_max: filters.voltage_max }),
-      ...(filters.current_min && { current_min: filters.current_min }),
-      ...(filters.current_max && { current_max: filters.current_max }),
-      ...(filters.power_min && { power_min: filters.power_min }),
-      ...(filters.power_max && { power_max: filters.power_max }),
-      ...(filters.frequency_min && { frequency_min: filters.frequency_min }),
-      ...(filters.frequency_max && { frequency_max: filters.frequency_max }),
-      ...(filters.power_factor_min && { power_factor_min: filters.power_factor_min }),
-      ...(filters.power_factor_max && { power_factor_max: filters.power_factor_max }),
-      ...(filters.show_anomalies !== undefined && { show_anomalies: filters.show_anomalies }),
-    };
-    
-    console.log('Requesting CSV download with parameters:', params);
-    
-    // Use the full URL to your Django backend
-    const backendUrl = `${import.meta.env.VITE_API_URL}power-readings/export-csv/`;
-    console.log('Using backend URL:', backendUrl);
-    
-    // Make the API request (set responseType to blob to handle the file)
-    const response = await axios.get(backendUrl, {
-      params,
-      responseType: 'blob',
-      headers: {
-        'Accept': 'text/csv, application/octet-stream, */*'
+  // Handle CSV download
+  const handleDownloadCSV = async () => {
+    try {
+      // Only proceed if we have a selected node
+      if (!filters.node) {
+        alert('Please select a node first');
+        return;
       }
-    });
-    
-    // Check if the response is actually a CSV
-    const contentType = response.headers['content-type'];
-    if (contentType && contentType.includes('text/html')) {
-      throw new Error('Received HTML instead of CSV. The server might have returned an error.');
+      
+      // Show loading state
+      setIsDownloading(true);
+      
+      // Prepare the query parameters
+      const params = {
+        node: filters.node,
+        // Include parameter filters if they exist
+        ...(filters.voltage_min && { voltage_min: filters.voltage_min }),
+        ...(filters.voltage_max && { voltage_max: filters.voltage_max }),
+        ...(filters.current_min && { current_min: filters.current_min }),
+        ...(filters.current_max && { current_max: filters.current_max }),
+        ...(filters.power_min && { power_min: filters.power_min }),
+        ...(filters.power_max && { power_max: filters.power_max }),
+        ...(filters.frequency_min && { frequency_min: filters.frequency_min }),
+        ...(filters.frequency_max && { frequency_max: filters.frequency_max }),
+        ...(filters.power_factor_min && { power_factor_min: filters.power_factor_min }),
+        ...(filters.power_factor_max && { power_factor_max: filters.power_factor_max }),
+        ...(filters.show_anomalies !== undefined && { show_anomalies: filters.show_anomalies }),
+      };
+      
+      console.log('Requesting CSV download with parameters:', params);
+      
+      // Use the full URL to your Django backend
+      const backendUrl = `${import.meta.env.VITE_API_URL}power-readings/export-csv/`;
+      console.log('Using backend URL:', backendUrl);
+      
+      // Make the API request
+      const response = await axios.get(backendUrl, {
+        params,
+        responseType: 'blob',
+        headers: {
+          'Accept': 'text/csv, application/octet-stream, */*'
+        }
+      });
+      
+      // Create and trigger download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Generate filename
+      let filename = `${filters.node}_power_data`;
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0]; 
+      filename += `_export_${dateStr}.csv`;
+      
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+      setIsDownloading(false);
+    } catch (error) {
+      console.error('Error downloading CSV:', error);
+      setIsDownloading(false);
+      alert('Failed to download CSV: ' + (error.message || 'Unknown error'));
     }
-    
-    // Create a download link and trigger the download
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    
-    // Generate a descriptive filename
-    let filename = `${filters.node}_power_data`;
-
-    const today = new Date();
-    const dateStr = today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-    filename += `_export_${dateStr}.csv`;
-    
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    
-    // Clean up
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(link);
-    setIsDownloading(false);
-    
-    console.log('CSV download completed');
-  } catch (error) {
-    console.error('Error downloading CSV:', error);
-    setIsDownloading(false);
-    alert('Failed to download CSV: ' + (error.message || 'Unknown error'));
-  }
-};
+  };
   
   return (
     <div className="readings-container">
@@ -275,7 +278,10 @@ const handleDownloadCSV = async () => {
       {/* Data Table with Pagination */}
       {!loading && !error && filteredReadings.length > 0 && (
         <>
-          <DataTable readings={currentItems} />
+          <DataTable 
+            readings={currentItems} 
+            onShowStatusReport={handleShowStatusReport}
+          />
           
           <PaginationControls
             currentPage={currentPage}
@@ -289,6 +295,14 @@ const handleDownloadCSV = async () => {
             changeItemsPerPage={changeItemsPerPage}
           />
         </>
+      )}
+      
+      {/* Status Report Modal */}
+      {showStatusReport && selectedAnomaly && (
+        <StatusReportModal 
+          anomalyReading={selectedAnomaly}
+          onClose={handleCloseStatusReport}
+        />
       )}
 
       {/* Load More Button */}

@@ -114,7 +114,26 @@ const StatusReportChart = ({ anomalyReading }) => {
         show: false
       },
       tooltip: {
-        enabled: false // Disable tooltips for PDF export
+        // Enable tooltips for interactive use
+        enabled: true,
+        theme: 'light',
+        style: {
+          fontSize: '12px',
+          fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+        },
+        // Custom tooltip formatting
+        y: {
+          formatter: function(value) {
+            const direction = value >= 0 ? 'increases' : 'decreases';
+            return `SHAP value: ${value.toFixed(4)} (${direction} probability)`;
+          }
+        },
+        x: {
+          show: true
+        },
+        marker: {
+          show: true,
+        }
       },
       title: {
         text: `Feature Impact on "${explanation.predicted_class}" Classification`,

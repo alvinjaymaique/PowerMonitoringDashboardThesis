@@ -5,7 +5,6 @@ import LoginPage from "./Page/LoginPage.jsx";
 import SignupPage from "./page/SignupPage.jsx";
 import MainContent from "./page/MainContent.jsx";
 import ApiTest from "./ApiTest.jsx";
-import StatusReportPage from "./page/StatusReportPage.jsx";
 import "./App.css";
 
 function App() {
@@ -17,7 +16,6 @@ function App() {
         <Route path="/power-readings" element={<PowerReadings />} />
         <Route path="/dashboard" element={<MainContent />} />
         <Route path="/api-test" element={<ApiTest />} />
-        <Route path="/status-report" element={<StatusReportPage />} />
       </Routes>
     </Router>
   );
