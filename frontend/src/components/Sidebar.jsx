@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
 import "../css/Sidebar.css";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTachometerAlt, faTable, faUser, faBolt, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faTachometerAlt, 
+  faTable, 
+  faUser, 
+  faBolt, 
+  faSignOutAlt,
+  faChartBar // Add this import for the chart icon
+} from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 
 const Sidebar = ({ onMenuClick }) => {
@@ -88,6 +95,13 @@ const Sidebar = ({ onMenuClick }) => {
         onClick={() => handleMenuClick("powerReadings")}
       >
         <FontAwesomeIcon icon={faTable} className="fa-icon" /> Tabled Data
+      </button>
+      {/* Add Summary Report button */}
+      <button 
+        className={activeMenu === "summaryReport" ? "active" : ""} 
+        onClick={() => handleMenuClick("summaryReport")}
+      >
+        <FontAwesomeIcon icon={faChartBar} className="fa-icon" /> Summary Report
       </button>
       <div className="user-container">
         <div className="profile">

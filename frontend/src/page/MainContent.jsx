@@ -2,18 +2,20 @@ import React, { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import PowerReadings from "../components/PowerReadings";
 import Dashboard from "../components/Dashboard";
-// import RealtimePowerReadings from "../components/RealtimePowerReadings";
+import SummaryReport from "../components/SummaryReport"; // Add this import
 import "../css/MainContent.css";
 
 const MainContent = () => {
-  const [activeContent, setActiveContent] = useState("dashboard");
+  const [activeContent, setActiveContent] = useState("Dashboard");
 
   const renderContent = () => {
     switch (activeContent) {
-      case "dashboard":
+      case "Dashboard":
         return <Dashboard />;
       case "powerReadings":
         return <PowerReadings />;
+      case "summaryReport": // Add this case
+        return <SummaryReport />;
       case "settings":
         return <h2>Settings Content</h2>;
       default:

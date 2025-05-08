@@ -20,24 +20,24 @@ const StatusReportModal = ({ anomalyReading, onClose }) => {
   const handleDownloadPDF = async () => {
     try {
       setIsGeneratingPDF(true);
-
+  
       // Create a new PDF document
       const pdf = new jsPDF("portrait", "mm", "a4");
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 10;
-
+  
       // Add title
       pdf.setFontSize(18);
       pdf.text(`Anomaly Analysis Report`, margin, margin + 5);
-
+  
       pdf.setFontSize(12);
       pdf.text(
         `Generated: ${new Date().toLocaleString()}`,
         margin,
         margin + 15
       );
-
+  
       if (anomalyReading) {
         pdf.text(
           `Anomaly Type: ${anomalyReading.anomaly_type || "Unknown"}`,
@@ -55,7 +55,7 @@ const StatusReportModal = ({ anomalyReading, onClose }) => {
           margin + 45
         );
       }
-
+  
       // Capture the chart with higher quality
       const chartElement = document.querySelector(".status-report-chart");
       if (chartElement) {
@@ -66,7 +66,7 @@ const StatusReportModal = ({ anomalyReading, onClose }) => {
           allowTaint: true,
           backgroundColor: "#ffffff"
         });
-
+  
         const chartImgData = chartCanvas.toDataURL("image/png");
         
         // Calculate dimensions that preserve aspect ratio
@@ -74,7 +74,7 @@ const StatusReportModal = ({ anomalyReading, onClose }) => {
         const chartWidth = pageWidth - (margin * 2);
         const chartHeight = chartWidth / chartAspectRatio;
         
-        // Add chart with preserved aspect ratio
+        // Add chart with preserved aspect ratio on first page
         pdf.addImage(
           chartImgData,
           "PNG",
@@ -84,9 +84,14 @@ const StatusReportModal = ({ anomalyReading, onClose }) => {
           chartHeight
         );
         
-        // Calculate next Y position
-        let yPosition = 60 + chartHeight + 10;
-
+        // Always start a new page for explanation section
+        pdf.addPage();
+        
+        // Add explanation title to second page
+        pdf.setFontSize(16);
+        pdf.text(`Anomaly Classification Details`, margin, margin + 10);
+        pdf.setFontSize(12);
+  
         // Capture the explanation
         const explanationElement = document.querySelector(
           ".status-report-explanation"
@@ -99,7 +104,7 @@ const StatusReportModal = ({ anomalyReading, onClose }) => {
             allowTaint: true,
             backgroundColor: "#ffffff"
           });
-
+  
           const explImgData = explCanvas.toDataURL("image/png");
           
           // Calculate explanation dimensions
@@ -107,23 +112,18 @@ const StatusReportModal = ({ anomalyReading, onClose }) => {
           const explWidth = chartWidth;
           const explHeight = explWidth / explAspectRatio;
           
-          // Check if we need a new page
-          if (yPosition + explHeight > pageHeight - margin) {
-            pdf.addPage();
-            yPosition = margin + 5;
-          }
-          
+          // Add explanation to second page
           pdf.addImage(
             explImgData,
             "PNG",
             margin,
-            yPosition,
+            margin + 20,
             explWidth,
             explHeight
           );
         }
       }
-
+  
       // Save the PDF
       pdf.save(`Anomaly_Report_${reportDate}.pdf`);
     } catch (error) {
