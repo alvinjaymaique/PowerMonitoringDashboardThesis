@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import React, { useState, useEffect, useRef } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faSpinner, faDownload, faExclamationTriangle, 
   faChartBar, faGears 
-} from "@fortawesome/free-solid-svg-icons";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
-import axios from "axios";
+} from '@fortawesome/free-solid-svg-icons';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import axios from 'axios';
 import { usePowerData } from '../hooks/usePowerData';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -15,7 +15,7 @@ import {
 import "../css/SummaryReport.css";
 
 const SummaryReport = () => {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [featureImportance, setFeatureImportance] = useState([]);
   const [anomalyTypeImportance, setAnomalyTypeImportance] = useState({});
@@ -23,38 +23,120 @@ const SummaryReport = () => {
   const [reportDate] = useState(new Date().toISOString().split("T")[0]);
   const [minFeatures, setMinFeatures] = useState(8);
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
-  const [sampleSize, setSampleSize] = useState(500); // Default sample size
+  const [sampleSize, setSampleSize] = useState(500);
   const [calculationProgress, setCalculationProgress] = useState(0);
   const [progressTimer, setProgressTimer] = useState(null);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [loadedReadings, setLoadedReadings] = useState([]);
   
   const chartContainerRef = useRef(null);
   
   const { 
-    readings,
     availableNodes,
     selectedNode,
     startDate,
     endDate,
     nodeMinDate,
     nodeMaxDate,
-    isLoading: isLoadingData,
     isLoadingNodes,
     isLoadingDateRange,
     handleNodeChange,
     handleStartDateChange,
     handleEndDateChange
-  } = usePowerData();
+  } = usePowerData(true); // Pass true to skip auto-fetching
 
+  // Clean up timer on unmount
   useEffect(() => {
     return () => {
       if (progressTimer) clearInterval(progressTimer);
     };
   }, [progressTimer]);
   
+  // Function to fetch data for a specific date
+  const fetchDataForDate = async (node, year, month, day) => {
+    try {
+      // Get API base URL from environment or default
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+      const baseUrl = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
+      const endpoint = baseUrl.includes('/api') ? 
+        `${baseUrl}/firebase/node-data/` : 
+        `${baseUrl}/api/firebase/node-data/`;
+      
+      const response = await axios.get(endpoint, {
+        params: {
+          node,
+          year,
+          month,
+          day
+        }
+      });
+      
+      return response.data || [];
+    } catch (error) {
+      console.error(`Error fetching data for ${year}-${month}-${day}:`, error);
+      return [];
+    }
+  };
+
+  // Function to fetch all data for date range
+  const fetchDateRangeData = async (node, startDate, endDate) => {
+    setIsLoadingData(true);
+    
+    try {
+      // Calculate date range as an array of dates
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const dateRange = [];
+      let currentDate = new Date(start);
+      
+      while (currentDate <= end) {
+        dateRange.push(new Date(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      
+      const allReadings = [];
+      
+      // Process each day one by one
+      for (let i = 0; i < dateRange.length; i++) {
+        const date = dateRange[i];
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        
+        console.log(`Fetching data for ${selectedNode} on ${year}-${month}-${day}`);
+        
+        // Fetch data for this specific day
+        const dailyData = await fetchDataForDate(node, year, month, day);
+        
+        // Add processed data to cumulative array
+        allReadings.push(...dailyData);
+        
+        // Add a small delay between fetches to prevent overwhelming the API
+        if (i < dateRange.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      
+      console.log(`Completed loading all data: ${allReadings.length} readings`);
+      return allReadings;
+      
+    } catch (error) {
+      console.error("Error fetching date range data:", error);
+      throw error;
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+  
   const generateAnalysis = async () => {
-    if (!readings || readings.length === 0) {
-      setError("No readings available for analysis. Please select a date range with data.");
-      setIsLoading(false);
+    // Validate required selections first
+    if (!selectedNode) {
+      setError("Please select a node first.");
+      return;
+    }
+    
+    if (!startDate || !endDate) {
+      setError("Please select a date range first.");
       return;
     }
     
@@ -63,20 +145,9 @@ const SummaryReport = () => {
     setError(null);
     setCalculationProgress(0);
     
-    // Only include anomaly readings for SHAP analysis
-    const anomalyReadings = readings.filter(r => r.is_anomaly === true);
-    
-    if (anomalyReadings.length === 0) {
-      setError("No anomalies found in the selected data. Please select a date range with anomalies.");
-      setIsLoading(false);
-      setIsGeneratingAnalysis(false);
-      return;
-    }
-
-    // Simulate progress for better UX - will be replaced with real progress API when available
+    // Create progress simulation
     const timer = setInterval(() => {
       setCalculationProgress(prev => {
-        // Increase progress but cap at 90% until we get actual completion
         if (prev < 90) return prev + (90 - prev) / 10;
         return prev;
       });
@@ -85,14 +156,31 @@ const SummaryReport = () => {
     setProgressTimer(timer);
     
     try {
-      // Get API base URL from environment or default
+      // First, explicitly fetch data for the selected date range
+      const readings = await fetchDateRangeData(selectedNode, startDate, endDate);
+      setLoadedReadings(readings);
+      
+      if (!readings || readings.length === 0) {
+        setError("No readings found for the selected date range. Please try a different selection.");
+        return;
+      }
+      
+      // Process the data - check for anomalies
+      const anomalyReadings = readings.filter(r => r.is_anomaly === true);
+      
+      if (anomalyReadings.length === 0) {
+        setError("No anomalies found in the selected data. Please select a date range with anomalies.");
+        return;
+      }
+      
+      // Build the global feature importance API endpoint
       const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
-      const baseUrl = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
-      const endpoint = baseUrl.includes('/api') ? 
+      const baseUrl = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, '-1') : apiBaseUrl;
+      const featureImportanceEndpoint = baseUrl.includes('/api') ? 
         `${baseUrl}/global-feature-importance/` : 
         `${baseUrl}/api/global-feature-importance/`;
       
-      console.log(`Requesting global feature importance from ${endpoint}`);
+      console.log(`Requesting global feature importance from ${featureImportanceEndpoint}`);
       
       // Sample readings using stratified sampling for better performance
       let sampledReadings = anomalyReadings;
@@ -101,91 +189,60 @@ const SummaryReport = () => {
         sampledReadings = stratifiedSample(anomalyReadings, sampleSize);
       }
       
-      const response = await axios.post(endpoint, {
+      // Now proceed with SHAP analysis
+      const shapResponse = await axios.post(featureImportanceEndpoint, {
         readings: sampledReadings,
         sample_size: sampleSize
       });
       
-      console.log("Raw API response:", response);
-  
-      if (response.data) {
-        console.log("Feature importance data received:", response.data);
+      console.log("Raw API response:", shapResponse);
+      
+      if (shapResponse.data) {
+        console.log("Feature importance data received:", shapResponse.data);
         
-        if (!response.data.feature_names || !response.data.importance_values) {
+        if (!shapResponse.data.feature_names || !shapResponse.data.importance_values) {
           setError("Invalid data format received from server. Missing required fields.");
           return;
         }
         
-        // Validate data structure
-        if (response.data.feature_names.length !== response.data.importance_values.length) {
-          console.error("Mismatched feature names and values array lengths", {
-            nameLength: response.data.feature_names.length,
-            valueLength: response.data.importance_values.length
+        // Process the feature importance data as before
+        const featureData = shapResponse.data.feature_names.map((feature, index) => {
+            return {
+              feature: feature,
+              importance: shapResponse.data.importance_values[index]
+            };
           });
-          setError("Data integrity issue: Mismatched feature names and values");
-          return;
-        }
         
-        const featureData = response.data.feature_names.map((feature, index) => {
-          const importanceValue = response.data.importance_values[index];
-          // Extra validation with detailed logging
-          console.log(`Processing feature: ${feature}, value:`, importanceValue, 
-                     `type: ${typeof importanceValue}`);
-                     
-          // More robust conversion
-          let numericImportance = 0;
-          if (typeof importanceValue === 'number') {
-            numericImportance = importanceValue;
-          } else if (importanceValue !== null && importanceValue !== undefined) {
-            // Try to parse string or other value
-            const parsed = parseFloat(importanceValue);
-            if (!isNaN(parsed)) {
-              numericImportance = parsed;
-            }
+          setFeatureImportance(featureData);
+        
+          if (shapResponse.data.anomaly_types) {
+            setAnomalyTypeImportance(shapResponse.data.anomaly_types);
           }
           
-          return {
-            feature: feature,
-            importance: numericImportance
-          };
-        });
-        
-        console.log("Processed feature data:", featureData);
-        setFeatureImportance(featureData);
-        
-        if (response.data.anomaly_types) {
-          setAnomalyTypeImportance(response.data.anomaly_types);
-        } else {
-          setAnomalyTypeImportance({});
-        }
-        
-        if (response.data.min_features) {
-          setMinFeatures(response.data.min_features);
-        }
-
-        setCalculationProgress(100);
-      } else {
-        setError("Received empty response from server");
-      }
-    } catch (error) {
-        console.error("Error fetching feature importance:", error);
+          if (shapResponse.data.min_features) {
+            setMinFeatures(shapResponse.data.min_features);
+          }
   
-        // Enhanced error reporting
+          setCalculationProgress(100);
+        } else {
+          setError("Received empty response from server");
+        }
+      } catch (error) {
+        console.error("Error generating analysis:", error);
+        
         if (error.response) {
-          console.error("Server response data:", error.response.data);
-          console.error("Server response status:", error.response.status);
           setError(`Error ${error.response.status}: ${
             error.response.data?.error || error.message || "Unknown error"
           }`);
         } else {
-          setError(`Error fetching feature importance: ${error.message || "Unknown error"}`);
+          setError(`Error: ${error.message || "Unknown error"}`);
         }
-    } finally {
-      if (progressTimer) clearInterval(progressTimer);
-      setIsLoading(false);
-      setIsGeneratingAnalysis(false);
-    }
-  };
+      } finally {
+        if (progressTimer) clearInterval(progressTimer);
+        setIsLoading(false);
+        setIsGeneratingAnalysis(false);
+      }
+    };
 
   // Helper function to perform stratified sampling
   const stratifiedSample = (readings, targetSize) => {
@@ -408,23 +465,26 @@ const SummaryReport = () => {
       <div className="data-selection-controls">
         {/* Node Selection */}
         <div className="control-group">
-          <label>Node:</label>
-          <select 
-            value={selectedNode}
-            onChange={handleNodeChange}
-            disabled={isLoadingNodes || isLoadingData || isGeneratingAnalysis}
-          >
-            {isLoadingNodes ? (
-              <option value="">Loading nodes...</option>
-            ) : availableNodes.length > 0 ? (
-              availableNodes.map(node => (
-                <option key={node} value={node}>{node}</option>
-              ))
-            ) : (
-              <option value="">No nodes available</option>
-            )}
-          </select>
-        </div>
+    <label>Node:</label>
+    <select 
+        value={selectedNode}
+        onChange={handleNodeChange}
+        disabled={isLoadingNodes || isLoadingData || isGeneratingAnalysis}
+    >
+        {isLoadingNodes ? (
+        <option value="">Loading nodes...</option>
+        ) : availableNodes.length > 0 ? (
+        <>
+            <option value="">Select a node</option>
+            {availableNodes.map(node => (
+            <option key={node} value={node}>{node}</option>
+            ))}
+        </>
+        ) : (
+        <option value="">No nodes available</option>
+        )}
+    </select>
+    </div>
         
         {/* Date Range Selection */}
         <div className="control-group date-range-group">
@@ -674,4 +734,4 @@ const SummaryReport = () => {
   );
 };
 
-export default SummaryReport;
+export default SummaryReport;   

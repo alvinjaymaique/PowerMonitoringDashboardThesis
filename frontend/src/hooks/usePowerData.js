@@ -28,7 +28,7 @@ const formatDateForDisplay = (dateString) => {
     }
   };
   
-export const usePowerData = () => {
+export const usePowerData = (skipAutoFetch = false) => {
   // State variables for dashboard data
   const [readings, setReadings] = useState([]);
   const [latestReading, setLatestReading] = useState(null);
@@ -146,6 +146,7 @@ export const usePowerData = () => {
   useEffect(() => {
     if (!selectedNode || !startDate || !endDate || !nodeMinDate || !nodeMaxDate) return;
     if (isLoadingDateRange) return; // Don't start if still loading date range
+    if (skipAutoFetch) return; // Skip auto-fetching if requested
     
     const loadDashboardDataProgressively = async () => {
       if (isFetchingRef.current) return; // Prevent multiple fetches
@@ -264,7 +265,7 @@ export const usePowerData = () => {
     };
     
     loadDashboardDataProgressively();
-  }, [selectedNode, startDate, endDate, nodeMinDate, nodeMaxDate, isLoadingDateRange]);
+  }, [selectedNode, startDate, endDate, nodeMinDate, nodeMaxDate, isLoadingDateRange, skipAutoFetch]);
 
   // Function to fetch daily data
   const fetchDailyData = async (node, year, month, day) => {
