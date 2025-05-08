@@ -27,7 +27,7 @@ const SummaryReport = () => {
   const [calculationProgress, setCalculationProgress] = useState(0);
   const [progressTimer, setProgressTimer] = useState(null);
   const [isLoadingData, setIsLoadingData] = useState(false);
-  const [loadedReadings, setLoadedReadings] = useState([]);
+  const [anomalyFilter, setAnomalyFilter] = useState('all');
   
   const chartContainerRef = useRef(null);
   
@@ -207,6 +207,19 @@ const fetchSampledData = async (node, startDate, endDate, targetSampleSize) => {
       setCalculationProgress(90);
       
       console.log("Raw API response:", shapResponse);
+
+    // Add these debug statements
+    console.log("SHAP Response data structure:", {
+        has_anomaly_types: !!shapResponse.data.anomaly_types,
+        anomaly_types_keys: shapResponse.data.anomaly_types ? Object.keys(shapResponse.data.anomaly_types) : [],
+        feature_names_count: shapResponse.data.feature_names?.length,
+        importance_values_count: shapResponse.data.importance_values?.length
+        });
+
+        // Also add this to help debug
+        if (!shapResponse.data.anomaly_types || Object.keys(shapResponse.data.anomaly_types).length === 0) {
+        console.warn("Missing anomaly type importance data in API response");
+        }
       
       if (shapResponse.data) {
         console.log("Feature importance data received:", shapResponse.data);
@@ -660,66 +673,135 @@ const fetchSampledData = async (node, startDate, endDate, targetSampleSize) => {
                         offset={5}
                     />
                     </Bar>
-                </BarChart>
+                    </BarChart>
                 </ResponsiveContainer>
             </div>
             </div>
             
-            {Object.keys(anomalyTypeImportance).length > 0 && (
+            {/* Add a separate section for global feature importance of all 15 clusters */}
+            <h3 className="section-title">Global Feature Importance for Each Anomaly Type</h3>
+            <div className="troubleshooting-note" style={{marginBottom: '15px', padding: '10px', backgroundColor: '#FFF9E6', border: '1px solid #FFECCF', borderRadius: '4px'}}>
+              <p style={{color: '#805B10', margin: '0', fontSize: '0.9rem'}}><b>Note:</b> If you don't see the per-anomaly type charts below, it may be because:</p>
+              <ul style={{color: '#805B10', margin: '8px 0 0 0', fontSize: '0.9rem', paddingLeft: '20px'}}>
+                <li>Your sample size is too small for reliable per-anomaly calculations</li>
+                <li>The selected data doesn't contain enough examples of each anomaly type</li>
+                <li>Try increasing the sample size or selecting a different date range</li>
+              </ul>
+            </div>
+            <p className="section-description">
+              This section shows the global feature importance for each of the 15 anomaly clusters identified by the model.
+              Each chart displays how different features influence the model's classification for that specific anomaly type.
+            </p>
+            
+            {/* Display debug information to help troubleshoot */}
+            <div className="debug-info" style={{marginBottom: '10px', fontSize: '0.9rem', color: '#718096'}}>
+              {Object.keys(anomalyTypeImportance).length > 0 ? 
+                `Displaying feature importance for ${Object.keys(anomalyTypeImportance).length} anomaly types` : 
+                'No anomaly type feature importance data available'}
+            </div>
+            
+            {Object.keys(anomalyTypeImportance).length > 0 ? (
             <>
-                <h3 className="section-title">Feature Importance by Anomaly Type</h3>
+                <div className="anomaly-type-filters">
+                <button 
+                    className={`filter-btn ${anomalyFilter === 'all' ? 'active' : ''}`} 
+                    onClick={() => setAnomalyFilter('all')}
+                >
+                    Show All Types
+                </button>
+                <button 
+                    className={`filter-btn ${anomalyFilter === 'true' ? 'active' : ''}`} 
+                    onClick={() => setAnomalyFilter('true')}
+                >
+                    True Anomalies
+                </button>
+                <button 
+                    className={`filter-btn ${anomalyFilter === 'operational' ? 'active' : ''}`} 
+                    onClick={() => setAnomalyFilter('operational')}
+                >
+                    Operational States
+                </button>
+                </div>
+                
                 <div className="anomaly-type-charts">
-                {Object.entries(anomalyTypeImportance).map(([anomalyType, features]) => {
+                {Object.entries(anomalyTypeImportance)
+                    .filter(([anomalyType, _]) => {
+                    // Filter based on selected filter type
+                    if (anomalyFilter === 'all') return true;
+                    const isOperational = anomalyType.includes('Excellent') || 
+                                        anomalyType.includes('Optimal') || 
+                                        anomalyType.includes('Stable');
+                    return anomalyFilter === 'operational' ? isOperational : !isOperational;
+                    })
+                    .map(([anomalyType, features]) => {
                     const anomalyData = Object.entries(features)
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 5) // Show only top 5
-                    .map(([name, value]) => ({ 
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 5) // Show only top 5 for readability
+                        .map(([name, value]) => ({ 
                         name, 
                         value: typeof value === 'number' ? value : parseFloat(value) || 0 
-                    }));
+                        }));
+                    
+                    // Determine anomaly category for styling
+                    const isOperational = anomalyType.includes('Excellent') || 
+                                        anomalyType.includes('Optimal') || 
+                                        anomalyType.includes('Stable');
                     
                     return (
-                    <div key={anomalyType} className="anomaly-type-chart">
-                        <h4 className="anomaly-chart-title">{`Feature Importance for ${anomalyType}`}</h4>
+                        <div 
+                        key={anomalyType} 
+                        className={`anomaly-type-chart ${isOperational ? 'operational' : 'true-anomaly'}`}
+                        >
+                        <h4 className="anomaly-chart-title">{anomalyType}</h4>
+                        <div className="anomaly-category-tag">
+                            {isOperational ? 'Operational State' : 'True Anomaly'}
+                        </div>
                         <div className="chart-wrapper">
-                        {/* Add similar validation for anomaly charts */}
-                        <ResponsiveContainer width="100%" height={250}>
-                            <BarChart
-                            data={anomalyData}
-                            layout="vertical"
-                            margin={{ top: 5, right: 40, left: 40, bottom: 5 }}
-                            barCategoryGap="20%"
-                            maxBarSize={25}
+                            <ResponsiveContainer width="100%" height={180}>
+                            <BarChart 
+                                data={anomalyData} 
+                                layout="vertical"
+                                margin={{ top: 5, right: 40, left: 40, bottom: 5 }}
                             >
-                            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                            <XAxis 
-                                type="number" 
-                                domain={[0, dataMax => Math.max(dataMax * 1.1, 0.05)]}
-                                tickCount={5}
+                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                                <XAxis 
+                                type="number"
                                 tickFormatter={val => val.toFixed(3)}
-                            />
-                            <YAxis dataKey="name" type="category" width={100} />
-                            <Tooltip formatter={(value) => (typeof value === 'number' ? value.toFixed(4) : 'N/A')} />
-                            <Bar 
+                                />
+                                <YAxis 
+                                dataKey="name" 
+                                type="category" 
+                                width={80} 
+                                tick={{ fontSize: 11 }}
+                                />
+                                <Tooltip formatter={(value) => value.toFixed(4)} />
+                                <Bar 
                                 dataKey="value" 
-                                fill="#4299E1" 
+                                fill={isOperational ? "#4299e1" : "#e53e3e"}
                                 radius={[0, 4, 4, 0]}
                                 animationDuration={1000}
-                            >
+                                >
                                 <LabelList 
-                                dataKey="value" 
-                                position="right" 
-                                formatter={(value) => typeof value === 'number' ? value.toFixed(3) : 'N/A'} 
+                                    dataKey="value" 
+                                    position="right" 
+                                    formatter={(value) => typeof value === 'number' ? value.toFixed(3) : 'N/A'} 
                                 />
-                            </Bar>
+                                </Bar>
                             </BarChart>
-                        </ResponsiveContainer>
+                            </ResponsiveContainer>
                         </div>
-                    </div>
+                        <div className="anomaly-features-summary">
+                            <p className="top-feature">Top feature: <strong>{anomalyData[0]?.name || 'N/A'}</strong></p>
+                        </div>
+                        </div>
                     );
-                })}
+                    })}
                 </div>
             </>
+            ) : (
+                <div className="no-data-message">
+                    <p>No anomaly-specific feature importance data available. Please regenerate the analysis.</p>
+                </div>
             )}
             
             <div className="feature-summary">
