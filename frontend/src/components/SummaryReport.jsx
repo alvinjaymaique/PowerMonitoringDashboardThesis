@@ -84,8 +84,8 @@ const fetchDataForDate = async (node, year, month, day, sampleSize = null) => {
     }
   };
 
-  // Function to fetch all data for date range
-  const fetchSampledData = async (node, startDate, endDate, targetSampleSize) => {
+// Function to fetch all data for date range
+const fetchSampledData = async (node, startDate, endDate, targetSampleSize) => {
     setIsLoadingData(true);
     setCalculationProgress(0);
     
@@ -126,9 +126,10 @@ const fetchDataForDate = async (node, year, month, day, sampleSize = null) => {
         const dailyAnomalies = dailyData.filter(r => r.is_anomaly === true);
         anomalyReadings.push(...dailyAnomalies);
         
-        // Update progress
+        // Update progress - use only 60% of the progress bar for data fetching phase
+        // This leaves room for the analysis phase
         processedDays++;
-        setCalculationProgress(Math.min(90, (processedDays / Math.min(dateRange.length, 30)) * 100));
+        setCalculationProgress(Math.min(60, (processedDays / Math.min(dateRange.length, 30)) * 60));
         
         // Add a small delay to prevent overwhelming the API
         await new Promise(resolve => setTimeout(resolve, 50));
@@ -136,9 +137,14 @@ const fetchDataForDate = async (node, year, month, day, sampleSize = null) => {
       
       console.log(`Completed loading: Found ${anomalyReadings.length} anomalies`);
       
+      // Set progress to 70% after data fetching is complete
+      setCalculationProgress(70);
+      
       // Return stratified sample if we have more than needed
       if (anomalyReadings.length > targetSampleSize) {
-        return stratifiedSample(anomalyReadings, targetSampleSize);
+        const sampledData = stratifiedSample(anomalyReadings, targetSampleSize);
+        setCalculationProgress(75); // Update progress after sampling
+        return sampledData;
       }
       
       return anomalyReadings;
@@ -180,6 +186,9 @@ const fetchDataForDate = async (node, year, month, day, sampleSize = null) => {
         console.warn(`Found only ${sampledAnomalies.length} anomalies, which is less than requested sample size.`);
       }
       
+      // Progress update - preparing API call
+      setCalculationProgress(80);
+      
       // Build the global feature importance API endpoint
       const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
       const baseUrl = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
@@ -188,10 +197,14 @@ const fetchDataForDate = async (node, year, month, day, sampleSize = null) => {
         `${baseUrl}/api/global-feature-importance/`;
       
       // Now proceed with SHAP analysis using the pre-sampled data
+      setCalculationProgress(85); // Update progress - sending request
       const shapResponse = await axios.post(featureImportanceEndpoint, {
         readings: sampledAnomalies,
         sample_size: sampledAnomalies.length
       });
+      
+      // Progress update - processing response
+      setCalculationProgress(90);
       
       console.log("Raw API response:", shapResponse);
       
@@ -203,44 +216,48 @@ const fetchDataForDate = async (node, year, month, day, sampleSize = null) => {
           return;
         }
         
-        // Process the feature importance data as before
+        // Processing data - update progress
+        setCalculationProgress(95);
+        
+        // Process the feature importance data
         const featureData = shapResponse.data.feature_names.map((feature, index) => {
-            return {
-              feature: feature,
-              importance: shapResponse.data.importance_values[index]
-            };
-          });
+          return {
+            feature: feature,
+            importance: shapResponse.data.importance_values[index]
+          };
+        });
         
-          setFeatureImportance(featureData);
+        setFeatureImportance(featureData);
         
-          if (shapResponse.data.anomaly_types) {
-            setAnomalyTypeImportance(shapResponse.data.anomaly_types);
-          }
-          
-          if (shapResponse.data.min_features) {
-            setMinFeatures(shapResponse.data.min_features);
-          }
+        if (shapResponse.data.anomaly_types) {
+          setAnomalyTypeImportance(shapResponse.data.anomaly_types);
+        }
+        
+        if (shapResponse.data.min_features) {
+          setMinFeatures(shapResponse.data.min_features);
+        }
   
-          setCalculationProgress(100);
-        } else {
-          setError("Received empty response from server");
-        }
-      } catch (error) {
-        console.error("Error generating analysis:", error);
-        
-        if (error.response) {
-          setError(`Error ${error.response.status}: ${
-            error.response.data?.error || error.message || "Unknown error"
-          }`);
-        } else {
-          setError(`Error: ${error.message || "Unknown error"}`);
-        }
-      } finally {
-        if (progressTimer) clearInterval(progressTimer);
-        setIsLoading(false);
-        setIsGeneratingAnalysis(false);
+        // Final progress update - all done
+        setCalculationProgress(100);
+      } else {
+        setError("Received empty response from server");
       }
-    };
+    } catch (error) {
+      console.error("Error generating analysis:", error);
+      
+      if (error.response) {
+        setError(`Error ${error.response.status}: ${
+          error.response.data?.error || error.message || "Unknown error"
+        }`);
+      } else {
+        setError(`Error: ${error.message || "Unknown error"}`);
+      }
+    } finally {
+      if (progressTimer) clearInterval(progressTimer);
+      setIsLoading(false);
+      setIsGeneratingAnalysis(false);
+    }
+  };
 
   // Helper function to perform stratified sampling
   const stratifiedSample = (readings, targetSize) => {
@@ -527,36 +544,30 @@ const fetchDataForDate = async (node, year, month, day, sampleSize = null) => {
         </div>
       </div>
       
-      {isLoadingData && (
+      {(isLoadingData || isLoading) && (
         <div className="loading-container">
-          <FontAwesomeIcon icon={faSpinner} spin className="spinner" />
-          <p>Loading data for selected date range...</p>
-        </div>
-      )}
-      
-      {isLoading && !isLoadingData && (
-        <div className="loading-container">
-          <FontAwesomeIcon icon={faSpinner} spin className="spinner" />
-          <p>Calculating feature importance...</p>
-          
-          {/* Progress bar */}
-          {calculationProgress > 0 && (
+            <FontAwesomeIcon icon={faSpinner} spin className="spinner" />
+            <p>Loading analysis...</p>
+            
+            {/* Progress bar - always shown during any loading state */}
             <div className="calculation-progress">
-              <div className="progress-bar-wrapper">
+            <div className="progress-bar-wrapper">
                 <div 
-                  className="progress-bar-fill" 
-                  style={{ width: `${calculationProgress}%` }}
+                className="progress-bar-fill" 
+                style={{ width: `${calculationProgress}%` }}
                 ></div>
-              </div>
-              <div className="progress-label">{Math.round(calculationProgress)}%</div>
             </div>
-          )}
-          <p className="progress-note">
+            <div className="progress-label">{Math.round(calculationProgress)}%</div>
+            </div>
+            
+            <p className="progress-note">
             <FontAwesomeIcon icon={faGears} /> 
-            {' '}Processing {sampleSize} samples for accurate analysis
-          </p>
+            {isLoadingData ? 
+                `Processing data for ${selectedNode}` : 
+                `Analyzing ${sampleSize} samples`}
+            </p>
         </div>
-      )}
+        )}
 
       {error && (
         <div className="error-container">
