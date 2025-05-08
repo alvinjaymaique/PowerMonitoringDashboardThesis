@@ -255,17 +255,73 @@ class ShapExplainerService:
                 anomaly_types = {}
                 classes = self.classifier.model.classes_
                 
-                # In the try block where anomaly_types dictionary is built:
-                if isinstance(shap_values, list) and len(shap_values) == len(classes):
-                    for i, anomaly_class in enumerate(classes):
-                        class_importance = np.abs(shap_values[i]).mean(axis=0)
-                        anomaly_types[anomaly_class] = {
-                            feat: self.safely_convert_to_float(imp) for feat, imp in zip(self.classifier.features, class_importance)
-                        }
+                # Add direct print statements since logger output isn't visible
+                print(f"Calculating per-anomaly type importance for {len(classes)} classes")
+                print(f"SHAP values type: {type(shap_values)}")
                 
+                # Transform shap_values if needed to ensure proper format
+                shap_values_for_classes = shap_values
+                
+                # Handle different possible formats of SHAP values
+                if not isinstance(shap_values, list):
+                    print(f"Converting SHAP values from {type(shap_values)} to list format")
+                    if hasattr(shap_values, 'shape') and len(shap_values.shape) == 3:
+                        # Handle 3D array case (samples, features, classes)
+                        print(f"Detected 3D SHAP values with shape: {shap_values.shape}")
+                        # Convert to list with one element per class
+                        shap_values_for_classes = [shap_values[:, :, i] for i in range(shap_values.shape[2])]
+                    else:
+                        # Can't automatically convert - use a fallback
+                        print("Cannot automatically convert SHAP values to per-class format")
+                        # Create a simplified version with just the overall importance
+                        feature_imp = np.abs(shap_values).mean(axis=0) if hasattr(shap_values, 'mean') else []
+                        # Use the same importance for all classes as fallback
+                        shap_values_for_classes = [shap_values] * len(classes)
+                
+                print(f"Processing SHAP values list with length {len(shap_values_for_classes)}")
+                
+                for i, anomaly_class in enumerate(classes):
+                    try:
+                        # Skip if out of bounds
+                        if i >= len(shap_values_for_classes):
+                            print(f"Skipping class {anomaly_class} - index {i} out of bounds")
+                            continue
+                            
+                        # Get SHAP values for this class
+                        class_values = shap_values_for_classes[i]
+                        
+                        # Calculate mean absolute SHAP values for this class
+                        class_importance = np.abs(class_values).mean(axis=0)
+                        
+                        # Make sure we have the right number of values
+                        if len(class_importance) != len(self.classifier.features):
+                            print(f"Warning: Feature count mismatch - {len(class_importance)} values vs {len(self.classifier.features)} features")
+                            # Use min length to avoid index errors
+                            min_len = min(len(class_importance), len(self.classifier.features))
+                            class_importance = class_importance[:min_len]
+                            features = self.classifier.features[:min_len]
+                        else:
+                            features = self.classifier.features
+                        
+                        # Convert to a dictionary with feature names as keys
+                        class_importance_dict = {
+                            feat: self.safely_convert_to_float(imp) 
+                            for feat, imp in zip(features, class_importance)
+                        }
+                        
+                        # Store in anomaly_types dictionary with class name as key
+                        anomaly_types[str(anomaly_class)] = class_importance_dict
+                        print(f"Added importance data for class {anomaly_class} with {len(class_importance_dict)} features")
+                    except Exception as class_error:
+                        print(f"Error processing class {anomaly_class}: {str(class_error)}")
+                
+                print(f"Completed per-anomaly calculations. Keys: {list(anomaly_types.keys())}")
                 result['anomaly_types'] = anomaly_types
+                
             except Exception as e:
-                logger.warning(f"Could not calculate per-anomaly type importance: {str(e)}")
+                print(f"Could not calculate per-anomaly type importance: {str(e)}")
+                import traceback
+                print(f"Exception traceback: {traceback.format_exc()}")
             
             return result
         except Exception as e:

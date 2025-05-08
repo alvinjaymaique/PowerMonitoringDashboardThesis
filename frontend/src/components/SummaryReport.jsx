@@ -209,7 +209,7 @@ const fetchSampledData = async (node, startDate, endDate, targetSampleSize) => {
       console.log("Raw API response:", shapResponse);
 
     // Add these debug statements
-    console.log("SHAP Response data structure:", {
+    console.log("SHAP Response data structure each cluster:", {
         has_anomaly_types: !!shapResponse.data.anomaly_types,
         anomaly_types_keys: shapResponse.data.anomaly_types ? Object.keys(shapResponse.data.anomaly_types) : [],
         feature_names_count: shapResponse.data.feature_names?.length,
