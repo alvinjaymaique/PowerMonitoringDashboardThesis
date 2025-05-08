@@ -1386,6 +1386,42 @@ class ExplainAnomalyView(APIView):
                 {"error": f"Failed to generate explanation: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+            
+# Add this new class
+class GlobalFeatureImportanceView(APIView):
+    """API endpoint for generating global feature importance analysis."""
+    def post(self, request):
+        try:
+            # Get readings from request
+            readings = request.data.get('readings', [])
+            if not readings:
+                return Response(
+                    {"error": "No readings provided"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get sample size parameter (optional)
+            sample_size = int(request.data.get('sample_size', 500))
+            
+            # Generate global feature importance
+            global_importance = shap_explainer.generate_global_feature_importance(
+                readings, sample_size=sample_size
+            )
+            
+            if not global_importance:
+                return Response(
+                    {"error": "Could not generate feature importance"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+                
+            return Response(global_importance, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            print(f"Error in GlobalFeatureImportanceView: {str(e)}")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class TestMLClassifierView(APIView):
     """Test ML classifier functionality"""

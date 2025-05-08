@@ -5,20 +5,26 @@
     padding: 20px;
     color: var(--text-dark, #2d3748);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-white, #ffffff);
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 24px;
+    height: 100%;
+    overflow: auto;
   }
   
   .summary-report-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     padding-bottom: 10px;
     border-bottom: 1px solid var(--primary-border, #e2e8f0);
   }
   
   .summary-report-header h2 {
-    color: var(--primary-color, #2f855a);
-    font-size: 1.8rem;
+    color: var(--text-dark, #2d3748); /* color: var(--primary-color, #2f855a); */
+    font-size: 1.5rem;
     margin: 0;
   }
   
@@ -30,42 +36,42 @@
   
   .explanation-panel {
     background-color: var(--bg-light, #f7fafc);
-    padding: 20px;
-    border-radius: 8px;
-    border-left: 4px solid var(--primary-color, #2f855a);
+    padding: 16px;
+    border-radius: 4px;
+    border-left: 4px solid #38a169;
     margin-bottom: 20px;
   }
   
   .explanation-panel h3 {
     margin-top: 0;
-    color: var(--primary-color, #2f855a);
+    font-size: 1.1rem;
+    color: #2d3748;
+  }
+  
+  .explanation-panel p {
+    color: #4a5568;
+    margin-bottom: 12px;
   }
   
   .explanation-panel ul {
+    margin-top: 0;
+    color: #4a5568;
     padding-left: 20px;
   }
   
-  .explanation-panel li {
-    margin-bottom: 8px;
-  }
-  
   .chart-container {
-    background-color: var(--bg-white, #ffffff);
+    background-color: white;
     border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     padding: 20px;
-    margin-bottom: 20px;
-    width: 100%;
-    overflow: hidden;
+    height: 100%;
   }
   
   .chart-title {
-    color: var(--text-dark, #2d3748);
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 1.1rem;
+    color: #2d3748;
     margin-top: 0;
-    margin-bottom: 15px;
-    text-align: center;
+    margin-bottom: 16px;
   }
   
   .anomaly-chart-title {
@@ -80,8 +86,7 @@
   .chart-wrapper {
     width: 100%;
     height: 100%;
-    min-height: 250px;
-    /* Remove fixed height to allow responsive container to control it */
+    min-height: 300px;
   }
   
   .section-title {
@@ -112,15 +117,19 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 18px;
+    padding: 8px 16px;
     background-color: var(--primary-color, #2f855a);
     color: var(--bg-white, #ffffff);
     border: none;
-    border-radius: 8px;
+    border-radius: 4px;
     cursor: pointer;
     font-weight: 500;
     transition: background-color 0.2s;
     font-size: 0.95rem;
+  }
+
+  .download-button:hover {
+    background-color: var(--primary-dark, #2f855a);
   }
   
   .download-button:hover:not(:disabled) {
@@ -209,4 +218,177 @@
   /* Fix for labels that might get cut off */
   .recharts-layer.recharts-bar-labels {
     overflow: visible;
+  }
+
+  /* Add these new styles for data selection controls */
+
+.data-selection-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 24px;
+    background-color: #f9fafb;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+  }
+  
+  .control-group label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: #4a5568;
+  }
+  
+  .control-group select,
+  .control-group input {
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 0.95rem;
+  }
+  
+  .control-group select:focus,
+  .control-group input:focus {
+    border-color: #38a169;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.2);
+  }
+  
+  .date-range-group {
+    flex-grow: 1;
+  }
+  
+  .date-inputs {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .date-inputs span {
+    color: #4a5568;
+    font-size: 0.9rem;
+  }
+  
+  .generate-button {
+    background-color: #4299e1;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+  }
+  
+  .generate-button:hover {
+    background-color: #3182ce;
+  }
+  
+  .generate-button:disabled {
+    background-color: #a0aec0;
+    cursor: not-allowed;
+  }
+  
+  .report-actions {
+    display: flex;
+    gap: 12px;
+  }
+  
+  .generate-prompt {
+    text-align: center;
+    padding: 40px;
+    border: 2px dashed #e2e8f0;
+    border-radius: 8px;
+    color: #4a5568;
+    margin: 20px 0;
+  }
+
+  /* Add these styles for the calculation progress */
+.calculation-progress {
+    width: 100%;
+    max-width: 500px;
+    margin: 15px 0;
+  }
+  
+  .progress-bar-wrapper {
+    height: 10px;
+    background-color: #e2e8f0;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 5px;
+  }
+  
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #38A169 0%, #48BB78 100%);
+    border-radius: 5px;
+    transition: width 0.3s ease;
+  }
+  
+  .progress-label {
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #38A169;
+  }
+  
+  .progress-note {
+    font-size: 0.9rem;
+    color: #718096;
+    margin-top: 10px;
+  }
+  
+  .form-text {
+    font-size: 0.8rem;
+    color: #718096;
+    margin-top: 4px;
+    display: block;
+  }
+  
+  /* Sample size selector styling */
+  .control-group {
+    margin-bottom: 15px;
+  }
+  
+  .control-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  
+  .control-group select,
+  .control-group input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 0.9rem;
+  }
+  
+  .date-range-group {
+    margin-bottom: 15px;
+  }
+  
+  .date-inputs {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .date-inputs span {
+    color: #718096;
+  }
+  
+  .date-inputs input {
+    flex: 1;
   }
