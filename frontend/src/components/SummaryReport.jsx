@@ -53,23 +53,29 @@ const SummaryReport = () => {
   }, [progressTimer]);
   
   // Function to fetch data for a specific date
-  const fetchDataForDate = async (node, year, month, day) => {
+// Example API query with sampling
+const fetchDataForDate = async (node, year, month, day, sampleSize = null) => {
     try {
-      // Get API base URL from environment or default
       const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
       const baseUrl = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
       const endpoint = baseUrl.includes('/api') ? 
         `${baseUrl}/firebase/node-data/` : 
         `${baseUrl}/api/firebase/node-data/`;
       
-      const response = await axios.get(endpoint, {
-        params: {
-          node,
-          year,
-          month,
-          day
-        }
-      });
+      // Include sample_size parameter if provided
+      const params = {
+        node,
+        year,
+        month,
+        day
+      };
+      
+      if (sampleSize) {
+        params.sample_size = sampleSize;
+        params.anomalies_only = true; // Request only anomalies
+      }
+      
+      const response = await axios.get(endpoint, { params });
       
       return response.data || [];
     } catch (error) {
@@ -79,11 +85,12 @@ const SummaryReport = () => {
   };
 
   // Function to fetch all data for date range
-  const fetchDateRangeData = async (node, startDate, endDate) => {
+  const fetchSampledData = async (node, startDate, endDate, targetSampleSize) => {
     setIsLoadingData(true);
+    setCalculationProgress(0);
     
     try {
-      // Calculate date range as an array of dates
+      // Calculate date range
       const start = new Date(startDate);
       const end = new Date(endDate);
       const dateRange = [];
@@ -94,34 +101,50 @@ const SummaryReport = () => {
         currentDate.setDate(currentDate.getDate() + 1);
       }
       
-      const allReadings = [];
+      // Shuffle the date range to get a more representative sample across the entire period
+      const shuffledDateRange = [...dateRange].sort(() => 0.5 - Math.random());
       
-      // Process each day one by one
-      for (let i = 0; i < dateRange.length; i++) {
-        const date = dateRange[i];
+      const anomalyReadings = [];
+      let processedDays = 0;
+      
+      // Process one day at a time until we reach our target sample size
+      for (const date of shuffledDateRange) {
+        if (anomalyReadings.length >= Math.min(targetSampleSize * 2, 3000)) {
+          break; // We have enough data for sampling
+        }
+        
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         
-        console.log(`Fetching data for ${selectedNode} on ${year}-${month}-${day}`);
+        console.log(`Fetching data for ${node} on ${year}-${month}-${day}`);
         
         // Fetch data for this specific day
         const dailyData = await fetchDataForDate(node, year, month, day);
         
-        // Add processed data to cumulative array
-        allReadings.push(...dailyData);
+        // Filter for anomalies only
+        const dailyAnomalies = dailyData.filter(r => r.is_anomaly === true);
+        anomalyReadings.push(...dailyAnomalies);
         
-        // Add a small delay between fetches to prevent overwhelming the API
-        if (i < dateRange.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
+        // Update progress
+        processedDays++;
+        setCalculationProgress(Math.min(90, (processedDays / Math.min(dateRange.length, 30)) * 100));
+        
+        // Add a small delay to prevent overwhelming the API
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
       
-      console.log(`Completed loading all data: ${allReadings.length} readings`);
-      return allReadings;
+      console.log(`Completed loading: Found ${anomalyReadings.length} anomalies`);
+      
+      // Return stratified sample if we have more than needed
+      if (anomalyReadings.length > targetSampleSize) {
+        return stratifiedSample(anomalyReadings, targetSampleSize);
+      }
+      
+      return anomalyReadings;
       
     } catch (error) {
-      console.error("Error fetching date range data:", error);
+      console.error("Error fetching sampled data:", error);
       throw error;
     } finally {
       setIsLoadingData(false);
@@ -143,56 +166,31 @@ const SummaryReport = () => {
     setIsGeneratingAnalysis(true);
     setIsLoading(true);
     setError(null);
-    setCalculationProgress(0);
-    
-    // Create progress simulation
-    const timer = setInterval(() => {
-      setCalculationProgress(prev => {
-        if (prev < 90) return prev + (90 - prev) / 10;
-        return prev;
-      });
-    }, 500);
-    
-    setProgressTimer(timer);
     
     try {
-      // First, explicitly fetch data for the selected date range
-      const readings = await fetchDateRangeData(selectedNode, startDate, endDate);
-      setLoadedReadings(readings);
+      // Directly fetch a sample of anomalies instead of all data
+      const sampledAnomalies = await fetchSampledData(selectedNode, startDate, endDate, sampleSize);
       
-      if (!readings || readings.length === 0) {
-        setError("No readings found for the selected date range. Please try a different selection.");
+      if (!sampledAnomalies || sampledAnomalies.length === 0) {
+        setError("No anomalies found for the selected date range. Please try a different selection.");
         return;
       }
       
-      // Process the data - check for anomalies
-      const anomalyReadings = readings.filter(r => r.is_anomaly === true);
-      
-      if (anomalyReadings.length === 0) {
-        setError("No anomalies found in the selected data. Please select a date range with anomalies.");
-        return;
+      if (sampledAnomalies.length < sampleSize * 0.5 && sampledAnomalies.length < 100) {
+        console.warn(`Found only ${sampledAnomalies.length} anomalies, which is less than requested sample size.`);
       }
       
       // Build the global feature importance API endpoint
       const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
-      const baseUrl = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, '-1') : apiBaseUrl;
+      const baseUrl = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
       const featureImportanceEndpoint = baseUrl.includes('/api') ? 
         `${baseUrl}/global-feature-importance/` : 
         `${baseUrl}/api/global-feature-importance/`;
       
-      console.log(`Requesting global feature importance from ${featureImportanceEndpoint}`);
-      
-      // Sample readings using stratified sampling for better performance
-      let sampledReadings = anomalyReadings;
-      if (anomalyReadings.length > sampleSize) {
-        console.log(`Sampling ${sampleSize} readings from ${anomalyReadings.length} anomalies for performance`);
-        sampledReadings = stratifiedSample(anomalyReadings, sampleSize);
-      }
-      
-      // Now proceed with SHAP analysis
+      // Now proceed with SHAP analysis using the pre-sampled data
       const shapResponse = await axios.post(featureImportanceEndpoint, {
-        readings: sampledReadings,
-        sample_size: sampleSize
+        readings: sampledAnomalies,
+        sample_size: sampledAnomalies.length
       });
       
       console.log("Raw API response:", shapResponse);
