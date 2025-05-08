@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
   faExclamationTriangle,
-  faSpinner
+  faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   isAnomalyByThresholds,
@@ -29,16 +29,20 @@ const ReadingRow = React.memo(({ reading, formatDate, formatTime }) => {
   if (isAnomaly) {
     anomalyType = reading.anomaly_type || "Yes";
   }
-  
+
   // Remove debug logging
   // console.log("Reading:", reading.id, "Anomaly Type:", anomalyType, "Is Anomaly:", isAnomaly);
-  
+
   // Determine color class based on anomaly type
   const getAnomalyClass = (type) => {
-    if (type === 'Normal') return "normal-indicator";
-    if (type === 'Classifying...') return "processing-anomaly";
-    if (type === 'Unknown') return "unknown-anomaly";
-    if (type.includes('Excellent') || type.includes('Optimal') || type.includes('Stable')) 
+    if (type === "Normal") return "normal-indicator";
+    if (type === "Classifying...") return "processing-anomaly";
+    if (type === "Unknown") return "unknown-anomaly";
+    if (
+      type.includes("Excellent") ||
+      type.includes("Optimal") ||
+      type.includes("Stable")
+    )
       return "operational-anomaly";
     return "true-anomaly";
   };
@@ -86,15 +90,29 @@ const ReadingRow = React.memo(({ reading, formatDate, formatTime }) => {
         className={isAnomaly ? "anomaly-cell" : "normal-cell"}
         onClick={() => {
           if (isAnomaly) {
-            navigate("/status-report", { state: { anomalyReading: reading } });
+            navigate("/status-report", {
+              state: {
+                anomalyReading: reading,
+                selectedDate: reading.timestamp,
+              },
+            });
           }
         }}
         style={{ cursor: isAnomaly ? "pointer" : "default" }}
       >
         {isAnomaly ? (
-          <span className={`anomaly-type ${getAnomalyClass(anomalyType)}`} title={anomalyReason}>
-            <FontAwesomeIcon icon={anomalyType === 'Classifying...' ? faSpinner : faExclamationTriangle} 
-                             spin={anomalyType === 'Classifying...'} /> 
+          <span
+            className={`anomaly-type ${getAnomalyClass(anomalyType)}`}
+            title={anomalyReason}
+          >
+            <FontAwesomeIcon
+              icon={
+                anomalyType === "Classifying..."
+                  ? faSpinner
+                  : faExclamationTriangle
+              }
+              spin={anomalyType === "Classifying..."}
+            />
             {anomalyType}
           </span>
         ) : (
