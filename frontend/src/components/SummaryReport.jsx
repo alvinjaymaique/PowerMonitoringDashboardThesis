@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner, faDownload } from "@fortawesome/free-solid-svg-icons";
-import axios from "axios";
-import Chart from "react-apexcharts";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import "../css/SummaryReport.css";
+
+// Import Recharts components
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
+  ResponsiveContainer, LabelList 
+} from 'recharts';
 
 const SummaryReport = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -14,10 +18,12 @@ const SummaryReport = () => {
   const [anomalyTypeImportance, setAnomalyTypeImportance] = useState({});
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [reportDate] = useState(new Date().toISOString().split("T")[0]);
-
+  
+  // Reference to overall chart container
+  const chartContainerRef = useRef(null);
+  
   useEffect(() => {
-    // In a real implementation, you would fetch this from your API
-    // For now, we'll use the data from your Result.txt file
+    // Simulate API fetch
     const globalFeatureImportance = [
       { feature: "voltage", importance: 0.0278 },
       { feature: "voltage_deviation", importance: 0.0270 },
@@ -63,7 +69,6 @@ const SummaryReport = () => {
       }
     };
 
-    // In reality, you would fetch this data from your backend
     setFeatureImportance(globalFeatureImportance);
     setAnomalyTypeImportance(anomalyTypes);
     setIsLoading(false);
@@ -193,57 +198,10 @@ const SummaryReport = () => {
     );
   }
 
-  // Prepare chart data
-  const overallChartOptions = {
-    chart: {
-      type: 'bar',
-      height: 400,
-      toolbar: {
-        show: false
-      }
-    },
-    plotOptions: {
-      bar: {
-        horizontal: true,
-        borderRadius: 4,
-        dataLabels: {
-          position: 'top',
-        },
-      }
-    },
-    colors: ['#38A169'],
-    dataLabels: {
-      enabled: true,
-      formatter: function (val) {
-        return val.toFixed(4);
-      },
-      offsetX: 20,
-      style: {
-        fontSize: '12px',
-        colors: ['#333']
-      }
-    },
-    xaxis: {
-      categories: featureImportance.map(item => item.feature),
-    },
-    yaxis: {
-      title: {
-        text: 'Features'
-      },
-    },
-    title: {
-      text: 'Global Feature Importance Across All Anomaly Types',
-      align: 'center',
-      style: {
-        fontSize: '16px'
-      }
-    },
-  };
-
-  const overallChartSeries = [{
-    name: 'SHAP value',
-    data: featureImportance.map(item => item.importance)
-  }];
+  // Prepare data for recharts - sort by importance for better visualization
+  const rechartsData = featureImportance
+    .slice() // Create a copy to avoid mutating the original
+    .sort((a, b) => b.importance - a.importance);
 
   return (
     <div className="summary-report-container">
@@ -282,21 +240,54 @@ const SummaryReport = () => {
             <li>Different anomaly types show distinct importance patterns</li>
             <li>Eight out of ten features are needed to achieve 90% explanation quality</li>
           </ul>
-          <div className="citation-note">
-            Based on the XAI integration methodology outlined in Chapter 3 of our thesis
-          </div>
         </div>
         
-        <div className="chart-container overall-importance-chart">
-          <Chart
-            options={overallChartOptions}
-            series={overallChartSeries}
-            type="bar"
-            height={400}
-          />
-          <div className="chart-info">
-            <p><strong>Top 5 Features:</strong> voltage (0.0278), voltage_deviation (0.0270), 
-            pf_deviation (0.0249), powerFactor (0.0239), frequency (0.0194)</p>
+        {/* Main Feature Importance Chart */}
+        <div className="chart-container overall-importance-chart" ref={chartContainerRef}>
+          <h3 className="chart-title">Global Feature Importance Across All Anomaly Types</h3>
+          <div className="chart-wrapper">
+            <ResponsiveContainer width="100%" height={500}>
+              <BarChart
+                data={rechartsData}
+                layout="vertical"
+                margin={{ top: 5, right: 50, left: 40, bottom: 5 }}
+                barCategoryGap="20%"
+                maxBarSize={30}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                <XAxis 
+                  type="number" 
+                  domain={[0, dataMax => Math.max(dataMax * 1.1, 0.035)]}
+                  tickCount={6}
+                  tickFormatter={val => val.toFixed(3)}
+                />
+                <YAxis 
+                  dataKey="feature" 
+                  type="category" 
+                  width={120} 
+                  tick={{ fontSize: 13 }}
+                />
+                <Tooltip 
+                  formatter={(value) => [value.toFixed(4), "SHAP value"]}
+                  labelFormatter={(name) => `Feature: ${name}`}
+                  cursor={{fill: 'rgba(0, 0, 0, 0.05)'}}
+                />
+                <Bar 
+                  dataKey="importance" 
+                  fill="#38A169"
+                  radius={[0, 4, 4, 0]}
+                  animationDuration={1500}
+                >
+                  <LabelList 
+                    dataKey="importance" 
+                    position="right" 
+                    formatter={(value) => value.toFixed(4)} 
+                    style={{ fontWeight: 500 }}
+                    offset={5}
+                  />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
         
@@ -305,67 +296,49 @@ const SummaryReport = () => {
           {Object.entries(anomalyTypeImportance).map(([anomalyType, features]) => {
             const anomalyData = Object.entries(features)
               .sort((a, b) => b[1] - a[1])
-              .slice(0, 5); // Show only top 5
+              .slice(0, 5) // Show only top 5
+              .map(([name, value]) => ({ name, value }));
               
-            const series = [{
-              name: 'SHAP value',
-              data: anomalyData.map(item => item[1])
-            }];
-            
-            const options = {
-              chart: {
-                type: 'bar',
-                height: 250,
-                toolbar: {
-                  show: false
-                }
-              },
-              plotOptions: {
-                bar: {
-                  horizontal: true,
-                  borderRadius: 3,
-                }
-              },
-              colors: ['#4299E1'],
-              dataLabels: {
-                enabled: true,
-                formatter: function (val) {
-                  return val.toFixed(3);
-                },
-                offsetX: 15,
-                style: {
-                  fontSize: '11px',
-                  colors: ['#333']
-                }
-              },
-              xaxis: {
-                categories: anomalyData.map(item => item[0]),
-              },
-              yaxis: {
-                title: {
-                  text: 'Features'
-                },
-              },
-              title: {
-                text: `Feature Importance for ${anomalyType}`,
-                align: 'center',
-                style: {
-                  fontSize: '14px'
-                }
-              },
-            };
-            
             return (
               <div key={anomalyType} className="anomaly-type-chart">
-                <Chart
-                  options={options}
-                  series={series}
-                  type="bar"
-                  height={250}
-                />
+                <h4 className="anomaly-chart-title">{`Feature Importance for ${anomalyType}`}</h4>
+                <div className="chart-wrapper">
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart
+                      data={anomalyData}
+                      layout="vertical"
+                      margin={{ top: 5, right: 40, left: 40, bottom: 5 }}
+                      barCategoryGap="20%"
+                      maxBarSize={25}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                      <XAxis 
+                        type="number" 
+                        domain={[0, dataMax => Math.max(dataMax * 1.1, 0.05)]}
+                        tickCount={5}
+                        tickFormatter={val => val.toFixed(3)}
+                      />
+                      <YAxis dataKey="name" type="category" width={100} />
+                      <Tooltip formatter={(value) => value.toFixed(4)} />
+                      <Bar 
+                        dataKey="value" 
+                        fill="#4299E1" 
+                        radius={[0, 4, 4, 0]}
+                        animationDuration={1000}
+                      >
+                        <LabelList dataKey="value" position="right" formatter={(value) => value.toFixed(3)} />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             );
           })}
+        </div>
+        
+        <div className="feature-summary">
+          <p><strong>Top 5 Features:</strong> voltage (0.0278), voltage_deviation (0.0270), 
+          pf_deviation (0.0249), powerFactor (0.0239), frequency (0.0194)</p>
         </div>
       </div>
     </div>
