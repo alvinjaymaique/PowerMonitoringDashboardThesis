@@ -620,24 +620,30 @@ const fetchSampledData = async (node, startDate, endDate, targetSampleSize) => {
             </ul>
             </div>
             
-            <div className="chart-container overall-importance-chart" ref={chartContainerRef}>
-            <h3 className="chart-title">Global Feature Importance Across All Anomaly Types</h3>
-            <div className="chart-wrapper">
-                <ResponsiveContainer width="100%" height={500}>
-                <BarChart
-                    data={rechartsData}
-                    layout="vertical"
-                    margin={{ top: 5, right: 50, left: 40, bottom: 5 }}
-                    barCategoryGap="20%"
-                    maxBarSize={30}
-                >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                    <XAxis 
-                    type="number" 
-                    domain={[0, dataMax => Math.max(dataMax * 1.1, 0.035)]}
-                    tickCount={6}
-                    tickFormatter={val => val.toFixed(3)}
-                    />
+<div className="chart-container overall-importance-chart" ref={chartContainerRef}>
+  <h3 className="chart-title">Global Feature Importance Across All Anomaly Types</h3>
+  
+  {/* Add the Top 5 Features text here as a subheading */}
+  <p className="feature-highlight-text">
+    Top 5 Features: powerFactor (0.0348), pf_deviation (0.0343), frequency (0.0319), frequency_deviation (0.0295), voltage (0.0213)
+  </p>
+  
+  <div className="chart-wrapper">
+    <ResponsiveContainer width="100%" height={500}>
+      <BarChart
+        data={rechartsData}
+        layout="vertical"
+        margin={{ top: 5, right: 50, left: 40, bottom: 5 }}
+        barCategoryGap="20%"
+        maxBarSize={30}
+      >
+        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+        <XAxis 
+          type="number" 
+          domain={[0, dataMax => Math.max(dataMax * 1.1, 0.035)]}
+          tickCount={6}
+          tickFormatter={val => val.toFixed(3)}
+        />
                     <YAxis 
                     dataKey="feature" 
                     type="category" 
@@ -804,11 +810,6 @@ const fetchSampledData = async (node, startDate, endDate, targetSampleSize) => {
                 </div>
             )}
             
-            <div className="feature-summary">
-            <p><strong>Top 5 Features:</strong> {rechartsData.slice(0, 5).map(
-                item => `${item.feature} (${typeof item.importance === 'number' ? item.importance.toFixed(4) : 'N/A'})`
-            ).join(', ')}</p>
-            </div>
         </>
         )}
     </div>

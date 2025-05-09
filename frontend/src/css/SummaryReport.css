@@ -71,7 +71,7 @@
     font-size: 1.1rem;
     color: #2d3748;
     margin-top: 0;
-    margin-bottom: 16px;
+    margin-bottom: 10px;
   }
   
   .anomaly-chart-title {
@@ -393,4 +393,31 @@
     flex: 1;
   }
 
+  .feature-highlight-text {
+    color: #2f855a;
+    font-size: 1.1rem;
+    margin: 0 0 20px 0;
+    padding: 12px 16px;
+    background-color: #f0fff4;
+    border-radius: 8px;
+    display: block;
+    font-weight: 500;
+    border-left: 4px solid #38a169;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    width: fit-content;
+    line-height: 1.5;
+    letter-spacing: 0.2px;
+    position: relative;
+  }
   
+  .feature-highlight-text::before {
+    content: '★';
+    margin-right: 8px;
+    color: #38a169;
+  }
+  
+  /* Ensure vertical layout by removing any horizontal flexbox properties */
+  .overall-importance-chart {
+    display: flex;
+    flex-direction: column;
+  }
