@@ -41,18 +41,12 @@ const StatusReportModal = ({ anomalyReading, onClose }) => {
       pdf.setTextColor(47, 133, 90);
       pdf.setFont("helvetica", "bold");
 
-      // Primary Title
-      pdf.setFontSize(20);
-      pdf.text("POWER QUALITY MONITORING", pageWidth / 2, 15, {
-        align: "center",
-      });
-
       // Subtitle
-      pdf.setFontSize(14);
-      pdf.setTextColor(40, 125, 90); // Lighter green color
-      pdf.text("Anomaly Analysis Report", pageWidth / 2, 23, {
-        align: "center",
-      });
+      pdf.setFontSize(22);
+      const text = "Anomaly Analysis Report";
+      const textWidth = pdf.getTextWidth(text);
+      const textY = 30 - (30 - pdf.getFontSize() / 2) / 2; // Centered vertically within the fill
+      pdf.text(text, (pageWidth - textWidth) / 2, textY); // Centered horizontally and vertically
 
       // BODY SECTION
       pdf.setTextColor(50, 50, 50);
