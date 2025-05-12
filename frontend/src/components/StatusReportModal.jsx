@@ -1,6 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFileDownload, faSpinner, faTimes } from "@fortawesome/free-solid-svg-icons";
+import {
+  faFileDownload,
+  faSpinner,
+  faTimes,
+} from "@fortawesome/free-solid-svg-icons";
 import StatusReportChart from "./StatusReportChart";
 import StatusReportExplanation from "./StatusReportExplanation";
 import jsPDF from "jspdf";
@@ -11,120 +15,116 @@ const StatusReportModal = ({ anomalyReading, onClose }) => {
   const [reportDate, setReportDate] = useState(
     new Date().toISOString().split("T")[0]
   );
+  const [reportTime, setReportTime] = useState("");
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
-  const handleDateChange = (e) => {
-    setReportDate(e.target.value);
-  };
+  // Set the initial report date to the anomaly's timestamp if available
+  useEffect(() => {
+    if (anomalyReading && anomalyReading.timestamp) {
+      const anomalyDate = new Date(anomalyReading.timestamp);
+      setReportDate(anomalyDate.toISOString().split("T")[0]);
+      setReportTime(anomalyDate.toLocaleTimeString());
+    }
+  }, [anomalyReading]);
 
   const handleDownloadPDF = async () => {
     try {
       setIsGeneratingPDF(true);
-  
-      // Create a new PDF document
       const pdf = new jsPDF("portrait", "mm", "a4");
       const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 10;
-  
-      // Add title
-      pdf.setFontSize(18);
-      pdf.text(`Anomaly Analysis Report`, margin, margin + 5);
-  
+      const margin = 15;
+
+      // HEADER STYLING
+      pdf.setFillColor(217, 238, 218); // Light green header background
+      pdf.rect(0, 0, pageWidth, 30, "F");
+
+      pdf.setTextColor(47, 133, 90);
+      pdf.setFont("helvetica", "bold");
+
+      // Subtitle
+      pdf.setFontSize(22);
+      const text = "Anomaly Analysis Report";
+      const textWidth = pdf.getTextWidth(text);
+      const textY = 30 - (30 - pdf.getFontSize() / 2) / 2; // Centered vertically within the fill
+      pdf.text(text, (pageWidth - textWidth) / 2, textY); // Centered horizontally and vertically
+
+      // BODY SECTION
+      pdf.setTextColor(50, 50, 50);
       pdf.setFontSize(12);
-      pdf.text(
-        `Generated: ${new Date().toLocaleString()}`,
-        margin,
-        margin + 15
-      );
-  
+      let y = 40;
+      const lineHeight = 8;
+
+      // --- Helper to render label + value on the same line ---
+      const renderField = (label, value, valueColor = [0, 0, 0]) => {
+        pdf.setFont("helvetica", "bold");
+        pdf.setTextColor(0, 0, 0);
+        const labelText = `${label}:`;
+        const labelWidth = pdf.getTextWidth(labelText + " ");
+
+        pdf.text(labelText, margin, y);
+
+        pdf.setFont("helvetica", "normal");
+        pdf.setTextColor(...valueColor);
+        pdf.text(value, margin + labelWidth, y);
+
+        y += lineHeight;
+      };
+
+      // --- Render Fields ---
+      renderField("Generated", new Date().toLocaleString());
+
       if (anomalyReading) {
-        pdf.text(
-          `Anomaly Type: ${anomalyReading.anomaly_type || "Unknown"}`,
-          margin,
-          margin + 25
-        );
-        pdf.text(
-          `Reading ID: ${anomalyReading.id || "Unknown"}`,
-          margin,
-          margin + 35
-        );
-        pdf.text(
-          `Timestamp: ${new Date(anomalyReading.timestamp).toLocaleString()}`,
-          margin,
-          margin + 45
+        renderField(
+          "Anomaly Type",
+          anomalyReading.anomaly_type || "Unknown",
+          [200, 0, 0]
+        ); // red
+        renderField("Reading ID", anomalyReading.id || "Unknown");
+        renderField(
+          "Timestamp",
+          new Date(anomalyReading.timestamp).toLocaleString()
         );
       }
-  
-      // Capture the chart with higher quality
+
+      // CHART CAPTURE
       const chartElement = document.querySelector(".status-report-chart");
       if (chartElement) {
         const chartCanvas = await html2canvas(chartElement, {
-          scale: 2,
-          logging: false,
+          scale: 3,
           useCORS: true,
-          allowTaint: true,
-          backgroundColor: "#ffffff"
+          backgroundColor: "#ffffff",
         });
-  
-        const chartImgData = chartCanvas.toDataURL("image/png");
-        
-        // Calculate dimensions that preserve aspect ratio
-        const chartAspectRatio = chartCanvas.width / chartCanvas.height;
-        const chartWidth = pageWidth - (margin * 2);
-        const chartHeight = chartWidth / chartAspectRatio;
-        
-        // Add chart with preserved aspect ratio on first page
-        pdf.addImage(
-          chartImgData,
-          "PNG",
-          margin,
-          60,
-          chartWidth,
-          chartHeight
-        );
-        
-        // Always start a new page for explanation section
-        pdf.addPage();
-        
-        // Add explanation title to second page
-        pdf.setFontSize(16);
-        pdf.text(`Anomaly Classification Details`, margin, margin + 10);
-        pdf.setFontSize(12);
-  
-        // Capture the explanation
-        const explanationElement = document.querySelector(
-          ".status-report-explanation"
-        );
-        if (explanationElement) {
-          const explCanvas = await html2canvas(explanationElement, {
-            scale: 2,
-            logging: false,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: "#ffffff"
-          });
-  
-          const explImgData = explCanvas.toDataURL("image/png");
-          
-          // Calculate explanation dimensions
-          const explAspectRatio = explCanvas.width / explCanvas.height;
-          const explWidth = chartWidth;
-          const explHeight = explWidth / explAspectRatio;
-          
-          // Add explanation to second page
-          pdf.addImage(
-            explImgData,
-            "PNG",
-            margin,
-            margin + 20,
-            explWidth,
-            explHeight
-          );
-        }
+
+        const imgData = chartCanvas.toDataURL("image/png");
+        const imgWidth = pageWidth - 2 * margin;
+        const imgHeight = (chartCanvas.height / chartCanvas.width) * imgWidth;
+
+        pdf.addImage(imgData, "PNG", margin, y, imgWidth, imgHeight);
+        y += imgHeight + 10;
       }
-  
-      // Save the PDF
+
+      // ADD EXPLANATION SECTION ON NEW PAGE
+      pdf.addPage();
+
+      // Explanation content
+      const explanationElement = document.querySelector(
+        ".status-report-explanation"
+      );
+      if (explanationElement) {
+        const explCanvas = await html2canvas(explanationElement, {
+          scale: 3,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+        });
+
+        const explImgData = explCanvas.toDataURL("image/png");
+        const explWidth = pageWidth - 2 * margin;
+        const explHeight = (explCanvas.height / explCanvas.width) * explWidth;
+
+        pdf.setTextColor(0, 0, 0);
+        pdf.addImage(explImgData, "PNG", margin, 20, explWidth, explHeight);
+      }
+
       pdf.save(`Anomaly_Report_${reportDate}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -146,12 +146,12 @@ const StatusReportModal = ({ anomalyReading, onClose }) => {
 
         <div className="status-report-modal-toolbar">
           <div className="date-selector">
-            <div className="date-label">Report Date:</div>
+            <div className="date-label">Report Date and Time:</div>
             <input
-              type="date"
+              type="text"
               className="date-picker"
-              value={reportDate}
-              onChange={handleDateChange}
+              value={`${reportDate} ${reportTime}`}
+              readOnly
             />
           </div>
 
