@@ -24,6 +24,7 @@ const SummaryReport = () => {
   const [minFeatures, setMinFeatures] = useState(8);
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
   const [sampleSize, setSampleSize] = useState(500);
+  const [appliedSampleSize, setAppliedSampleSize] = useState(500);
   const [calculationProgress, setCalculationProgress] = useState(0);
   const [progressTimer, setProgressTimer] = useState(null);
   const [isLoadingData, setIsLoadingData] = useState(false);
@@ -176,7 +177,8 @@ const fetchSampledData = async (node, startDate, endDate, targetSampleSize) => {
     try {
       // Directly fetch a sample of anomalies instead of all data
       const sampledAnomalies = await fetchSampledData(selectedNode, startDate, endDate, sampleSize);
-      
+      setAppliedSampleSize(sampleSize);
+
       if (!sampledAnomalies || sampledAnomalies.length === 0) {
         setError("No anomalies found for the selected date range. Please try a different selection.");
         return;
@@ -616,7 +618,7 @@ const fetchSampledData = async (node, startDate, endDate, targetSampleSize) => {
                 <li>The top three influential features are {topFeatures}</li>
                 <li>Different anomaly types show distinct importance patterns</li>
                 <li>{minFeatures} out of {featureImportance.length} features are needed to achieve 90% explanation quality</li>
-                <li><strong>Sample size:</strong> {sampleSize} anomaly readings</li>
+                <li><strong>Sample size:</strong> {appliedSampleSize} anomaly readings</li>
             </ul>
             </div>
             
