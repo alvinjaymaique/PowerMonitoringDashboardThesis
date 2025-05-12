@@ -459,7 +459,7 @@ const fetchSampledData = async (node, startDate, endDate, targetSampleSize) => {
           <button 
             className="generate-button" 
             onClick={generateAnalysis}
-            disabled={isGeneratingAnalysis || isLoadingData || !selectedNode}
+            disabled={isGeneratingAnalysis || isLoadingData || !selectedNode || isLoadingDateRange}
           >
             {isGeneratingAnalysis ? (
               <>
