@@ -615,10 +615,17 @@ const fetchSampledData = async (node, startDate, endDate, targetSampleSize) => {
                 Key findings from this analysis:
             </p>
             <ul>
-                <li>The top three influential features are {topFeatures}</li>
-                <li>Different anomaly types show distinct importance patterns</li>
-                <li>{minFeatures} out of {featureImportance.length} features are needed to achieve 90% explanation quality</li>
+                  <p className="feature-highlight-text">
+                  Top 5 Features: {rechartsData.slice(0, 5).map(item => {
+                    const importanceVal = typeof item.importance === 'number' ? 
+                      item.importance.toFixed(4) : 
+                      'N/A';
+                    return `${item.feature} (${importanceVal})`;
+                  }).join(', ')}
+                </p>
                 <li><strong>Sample size:</strong> {appliedSampleSize} anomaly readings</li>
+                <li>A compacity analysis showed that {minFeatures} out of {featureImportance.length} features are needed to achieve 90% explanation quality</li>
+                <li>The following sections present global feature importance across all anomaly types as well as specific patterns observed for each anomaly cluster.</li>
             </ul>
             </div>
             
@@ -626,9 +633,7 @@ const fetchSampledData = async (node, startDate, endDate, targetSampleSize) => {
   <h3 className="chart-title">Global Feature Importance Across All Anomaly Types</h3>
   
   {/* Add the Top 5 Features text here as a subheading */}
-  <p className="feature-highlight-text">
-    Top 5 Features: powerFactor (0.0348), pf_deviation (0.0343), frequency (0.0319), frequency_deviation (0.0295), voltage (0.0213)
-  </p>
+
   
   <div className="chart-wrapper">
     <ResponsiveContainer width="100%" height={500}>
