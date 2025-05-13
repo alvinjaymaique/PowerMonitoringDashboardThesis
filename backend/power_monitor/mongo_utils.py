@@ -4,7 +4,7 @@ from .mongodb_helpers import get_mongo_db
 def save_user(user_data):
     """Save user to MongoDB"""
     mongo_db = get_mongo_db()
-    if not mongo_db:
+    if mongo_db is None:
         raise Exception("MongoDB connection not available")
     
     users_collection = mongo_db['users']
@@ -14,7 +14,7 @@ def save_user(user_data):
 def find_user_by_email(email):
     """Find user by email"""
     mongo_db = get_mongo_db()
-    if not mongo_db:
+    if mongo_db is None:
         raise Exception("MongoDB connection not available")
     
     users_collection = mongo_db['users']
@@ -25,7 +25,7 @@ def authenticate_user(email, password):
     from django.contrib.auth.hashers import check_password
     
     mongo_db = get_mongo_db()
-    if not mongo_db:
+    if mongo_db is None:
         raise Exception("MongoDB connection not available")
     
     user = find_user_by_email(email)
