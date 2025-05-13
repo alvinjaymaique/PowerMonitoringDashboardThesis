@@ -2,17 +2,27 @@
   "dependencies": {
     "django": "^99.99.99",
     "react-router": "^7.1.5",
-    "recharts": "^2.15.3"
+    "recharts": "^2.15.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "axios": "^1.7.9",
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "@fortawesome/react-fontawesome": "^0.2.2",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
+    "react-router-dom": "^7.5.2"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.1.2",
+    "vite": "^6.3.5"
   },
   "scripts": {
     "setup": "npm run setup:backend && npm run setup:frontend",
-    "setup:backend": "cd backend && pip install django djangorestframework django-cors-headers djangorestframework-simplejwt firebase-admin",
+    "setup:backend": "cd backend && python -m venv venv && venv\\Scripts\\activate.bat && pip install -r requirements.txt",
     "setup:frontend": "cd frontend && npm install",
     "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
-    "start:backend": "cd backend && python manage.py runserver",
+    "start:backend": "cd backend && venv\\Scripts\\activate.bat && python manage.py runserver",
     "start:frontend": "cd frontend && npm run dev"
   }
 }

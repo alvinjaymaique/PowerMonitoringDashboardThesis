@@ -22,7 +22,7 @@ const StatusReportExplanation = ({ anomalyReading }) => {
       'HighLoad_VoltageInstability': 'High load with significant voltage instability',
       'HighLoad_SevereTransients': 'Severe transient conditions during high load',
       'Idle_Undervoltage': 'Sustained undervoltage at idle, may indicate systemic issue',
-      'LowPF_ReactiveLoad': 'Reactive load with poor power factor',
+      'LightLoad_SeverePF': 'Light load with severely poor power factor',
       'ModeratePF_MinorSurge': 'Minor surges with moderate power factor issues',
       'HighLoad_MixedAnomalies': 'Mixed voltage anomalies under high load conditions',
       'LightLoad_Undervoltage_LowPF': 'Combined low power factor and undervoltage issue',
