@@ -1,0 +1,2 @@
+1.) open command prompt in the directory and run "npm run setup" this will create environment in the backend and install the dependencies in it
+2.) to execute the website by running the frontend and backend run the file "run.bat" or type in cmd "run"
