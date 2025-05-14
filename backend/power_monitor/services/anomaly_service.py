@@ -4,11 +4,11 @@ class AnomalyDetectionService:
     def __init__(self, thresholds=None):
         """Initialize with configurable thresholds."""
         self.thresholds = thresholds or {
-            'voltage': {'min': 210, 'max': 230},
+            'voltage': {'min': 217.4, 'max': 242.6},  # Match frontend thresholds
             'current': {'min': 0, 'max': 30},
             'power': {'min': 0, 'max': 5000},
-            'frequency': {'min': 59.5, 'max': 60.5},
-            'power_factor': {'min': 0.85, 'max': 1.0}
+            'frequency': {'min': 59.2, 'max': 60.8},  # Match frontend thresholds
+            'power_factor': {'min': 0.792, 'max': 1.0}  # Match frontend thresholds
         }
     
     def detect_anomalies(self, readings):
