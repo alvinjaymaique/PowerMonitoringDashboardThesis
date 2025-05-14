@@ -255,12 +255,12 @@ class FirebaseService:
         """Get list of available nodes from Firebase."""
         try:
             print("Attempting to fetch available nodes from Firebase...")
-            # First try the simplest approach - get all top-level keys
-            root_data = self.db_ref.get()
+            # Use shallow=True to get only the keys without downloading all data
+            snapshot = self.db_ref.get(shallow=True)
             
-            if not root_data:
+            if not snapshot:
                 print("No data found in Firebase root reference")
-                # Return fallback nodes if no data is found
+                # Return fallback nodes
                 fallback_nodes = [
                     'C-1', 'C-2', 'C-3', 'C-4', 'C-5', 'C-6', 'C-7', 'C-8', 'C-9', 
                     'C-11', 'C-13', 'C-14', 'C-15', 'C-16', 'C-17', 'C-18', 'C-19', 'C-20'
@@ -268,34 +268,15 @@ class FirebaseService:
                 print(f"Using fallback nodes: {fallback_nodes}")
                 return fallback_nodes
             
-            # Filter for keys that look like node IDs (e.g., 'C-1', 'C-2', etc.)
-            valid_nodes = [key for key in root_data.keys() if key.startswith('C-')]
-            valid_nodes.sort()  # Sort for consistent display
+            # Filter for keys that look like node IDs
+            valid_nodes = [key for key in snapshot.keys() if isinstance(key, str) and key.startswith('C-')]
+            valid_nodes.sort(key=lambda x: int(x.split('-')[1]) if x.split('-')[1].isdigit() else float('inf'))
             
-            if valid_nodes:
-                print(f"Found {len(valid_nodes)} nodes in Firebase: {valid_nodes}")
-                return valid_nodes
-            else:
-                # Return fallback if no valid node patterns found
-                fallback_nodes = [
-                    'C-1', 'C-2', 'C-3', 'C-4', 'C-5', 'C-6', 'C-7', 'C-8', 'C-9', 
-                    'C-11', 'C-13', 'C-14', 'C-15', 'C-16', 'C-17', 'C-18', 'C-19', 'C-20'
-                ]
-                print(f"No valid nodes found. Using fallback nodes: {fallback_nodes}")
-                return fallback_nodes
-                
+            return valid_nodes
         except Exception as e:
+            # Log the error
             print(f"Error fetching available nodes: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            
-            # Always return fallback nodes on error
-            fallback_nodes = [
-                'C-1', 'C-2', 'C-3', 'C-4', 'C-5', 'C-6', 'C-7', 'C-8', 'C-9', 
-                'C-11', 'C-13', 'C-14', 'C-15', 'C-16', 'C-17', 'C-18', 'C-19', 'C-20'
-            ]
-            print(f"Error occurred. Using fallback nodes: {fallback_nodes}")
-            return fallback_nodes
+            return ['C-1', 'C-2', 'C-3']
 
     def get_comparison_data(self, nodes, limit=20):
         """Get data for multiple nodes to compare."""
