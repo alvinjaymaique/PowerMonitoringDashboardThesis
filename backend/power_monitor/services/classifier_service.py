@@ -122,13 +122,15 @@ class MLAnomalyClassifier:
         """Classify a batch of readings."""
         logger.info(f"Classifying batch of {len(readings)} readings")
         anomaly_count = 0
+        result_readings = []
         
-        for i, reading in enumerate(readings):
+        for reading in readings:
+            # Only process readings flagged as anomalies
             if reading['is_anomaly']:
-                reading['anomaly_type'] = self.classify_anomaly(reading)
+                reading_copy = dict(reading)  # Create copy to avoid modifying original
+                reading_copy['anomaly_type'] = self.classify_anomaly(reading)
+                result_readings.append(reading_copy)
                 anomaly_count += 1
-            else:
-                reading['anomaly_type'] = 'Normal'
         
         logger.info(f"Classification complete. Found {anomaly_count} anomalies in {len(readings)} readings.")
-        return readings
+        return result_readings
